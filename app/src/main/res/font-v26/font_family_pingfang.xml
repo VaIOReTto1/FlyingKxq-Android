@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<font-family xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Regular -->
+    <font
+        android:font="@font/pingfang_regular"
+        android:fontStyle="normal"
+        android:fontWeight="400" />
+    <!-- Bold -->
+    <font
+        android:font="@font/pingfang_bold"
+        android:fontStyle="normal"
+        android:fontWeight="700" />
+    <!-- Extra Light -->
+    <font
+        android:font="@font/pingfang_extra_light"
+        android:fontStyle="normal"
+        android:fontWeight="200" />
+    <!-- Light -->
+    <font
+        android:font="@font/pingfang_light"
+        android:fontStyle="normal"
+        android:fontWeight="300" />
+    <!-- Medium -->
+    <font
+        android:font="@font/pingfang_medium"
+        android:fontStyle="normal"
+        android:fontWeight="500" />
+    <!-- Heavy -->
+    <font
+        android:font="@font/pingfang_heavy"
+        android:fontStyle="normal"
+        android:fontWeight="800" />
+</font-family>
