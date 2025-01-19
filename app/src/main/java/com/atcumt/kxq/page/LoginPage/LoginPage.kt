@@ -63,7 +63,7 @@ fun LoginPage(navController: NavController) {
                 { ButtonText("登录") },
                 modifier = Modifier.height(45.wdp).width(216.wdp),
                 onClick = {
-                    Log.d("test","111")
+                    navController.navigate("main")
                 }
             )
             Spacer(modifier = Modifier.padding(top = 19.wdp))

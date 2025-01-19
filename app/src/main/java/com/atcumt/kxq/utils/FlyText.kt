@@ -69,4 +69,23 @@ object FlyText {
             modifier = modifier
         )
     }
+
+    @Composable
+    fun TabText(text: String, modifier: Modifier = Modifier, isSelected: Boolean) {
+        Text(
+            text = text,
+            style = if (isSelected) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
+            modifier = modifier
+        )
+    }
+
+    @Composable
+    fun NavBottomBarText(text: String, modifier: Modifier = Modifier, isSelected: Boolean) {
+        Text(
+            text = text,
+            color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = modifier
+        )
+    }
 }

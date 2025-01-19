@@ -14,6 +14,7 @@ val PingFangFamily = FontFamily(
     Font(R.font.pingfang_bold, FontWeight.Bold),
     Font(R.font.pingfang_light, FontWeight.Light),
     Font(R.font.pingfang_medium, FontWeight.Medium),
+    Font(R.font.pingfang_semibold, FontWeight.SemiBold),
     Font(R.font.pingfang_heavy, FontWeight.Black)
 )
 
@@ -38,5 +39,10 @@ val Typography = Typography(
         fontFamily = PingFangFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 14.ssp
+    ),
+    bodySmall = TextStyle(
+        fontFamily = PingFangFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.ssp
     )
 )
