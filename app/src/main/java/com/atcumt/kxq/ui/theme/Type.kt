@@ -35,10 +35,15 @@ val Typography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 16.ssp
     ),
-    labelSmall = TextStyle(
+    labelLarge = TextStyle(
         fontFamily = PingFangFamily,
         fontWeight = FontWeight.Normal,
         fontSize = 14.ssp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = PingFangFamily,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.ssp
     ),
     bodySmall = TextStyle(
         fontFamily = PingFangFamily,

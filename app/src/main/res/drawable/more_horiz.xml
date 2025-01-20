@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="805"
+    android:viewportHeight="805">
+
+    <!-- 偏移后的路径 -->
+    <path
+        android:fillColor="#5f6368"
+        android:pathData="M240,805q33,0 56.5,-23.5T320,725q0,-33 -23.5,-56.5T240,645q-33,0 -56.5,23.5T160,725q0,33 23.5,56.5T240,805ZM480,805q33,0 56.5,-23.5T560,725q0,-33 -23.5,-56.5T480,645q-33,0 -56.5,23.5T400,725q0,33 23.5,56.5T480,805ZM720,805q33,0 56.5,-23.5T800,725q0,-33 -23.5,-56.5T720,645q-33,0 -56.5,23.5T640,725q0,33 23.5,56.5T720,805Z" />
+</vector>

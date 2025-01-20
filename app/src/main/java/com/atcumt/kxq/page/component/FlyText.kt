@@ -7,6 +7,15 @@ import androidx.compose.ui.Modifier
 import com.atcumt.kxq.ui.theme.FlyColors
 
 object FlyText {
+
+    @Composable
+    fun Text(text: String, modifier: Modifier = Modifier) {
+        Text(
+            text = text, color = MaterialTheme.colorScheme.onPrimary,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = modifier
+        )
+    }
     @Composable
     fun Title(text: String, modifier: Modifier = Modifier) {
         Text(
@@ -65,7 +74,7 @@ object FlyText {
     fun LabelText(text: String, modifier: Modifier = Modifier) {
         Text(
             text = text, color = MaterialTheme.colorScheme.onSecondary,
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelLarge,
             modifier = modifier
         )
     }
@@ -85,6 +94,16 @@ object FlyText {
             text = text,
             color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondary,
             style = MaterialTheme.typography.bodyMedium,
+            modifier = modifier
+        )
+    }
+
+    @Composable
+    fun SignalText(text: String, modifier: Modifier = Modifier) {
+        Text(
+            text = text,
+            color = MaterialTheme.colorScheme.onSecondary,
+            style = MaterialTheme.typography.labelSmall,
             modifier = modifier
         )
     }

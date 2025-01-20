@@ -27,7 +27,8 @@ object FlyButton {
     fun FlyMainButton(
         content: @Composable () -> Unit,
         modifier: Modifier = Modifier,
-        onClick: () -> Unit
+        onClick: () -> Unit,
+        round: Dp = 26.wdp
     ) {
         Box(
             modifier = modifier
@@ -35,7 +36,7 @@ object FlyButton {
                     brush = Brush.linearGradient(
                         colors = listOf(FlyColors.FlyMain, FlyColors.FlyMainLight)
                     ),
-                    shape = RoundedCornerShape(26.dp)
+                    shape = RoundedCornerShape(round)
                 ).clickable(
                     onClick = onClick,
                     indication = null,
@@ -58,7 +59,8 @@ object FlyButton {
         content: @Composable () -> Unit,
         modifier: Modifier = Modifier,
         onClick: () -> Unit,
-        width: Dp = 2.wdp
+        width: Dp = 2.wdp,
+        round: Dp = 26.wdp
     ) {
         Box(
             modifier = modifier
@@ -67,7 +69,7 @@ object FlyButton {
                     brush = Brush.linearGradient(
                         colors = listOf(FlyColors.FlyMain, FlyColors.FlyMainLight)
                     ),
-                    shape = RoundedCornerShape(26.dp)
+                    shape = RoundedCornerShape(round)
                 ).clickable(
                     onClick = onClick,
                     indication = null,
