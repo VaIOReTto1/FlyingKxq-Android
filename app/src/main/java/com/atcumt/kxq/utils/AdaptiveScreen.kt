@@ -5,8 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import globalScaleX
-import globalScaleY
+import com.atcumt.kxq.utils.globalScaleX
+import com.atcumt.kxq.utils.globalScaleY
 
 /**
  * 屏幕适配工具，按照 393 × 852 的比例动态调整 UI

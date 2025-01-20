@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.font.FontWeight
 import com.atcumt.kxq.R
-import ssp
+import com.atcumt.kxq.utils.ssp
 
 // 定义 PingFang SC 字体
 val PingFangFamily = FontFamily(

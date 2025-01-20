@@ -28,11 +28,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
-import com.atcumt.kxq.page.HomePage.HomeTab
+import com.atcumt.kxq.page.home.HomeTab
 import com.atcumt.kxq.page.login.view.LoginPage.LoginPage
 import com.atcumt.kxq.page.component.FlyText.NavBottomBarText
+import com.atcumt.kxq.page.profile.ProfilePage
 import kotlinx.coroutines.launch
-import wdp
+import com.atcumt.kxq.utils.wdp
 
 @Composable
 fun MainPage() {
@@ -75,10 +76,11 @@ private fun HorizontalPagerContent(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 根据页面索引显示对应的内容
-            if (page == 0) {
-                HomeTab() // 首页内容
-            } else {
-                LoginPage(rememberNavController()) // 其他页面内容
+            when (page) {
+                0 -> HomeTab() // 首页
+                1 -> LoginPage(rememberNavController()) // 咨询
+                2 -> LoginPage(rememberNavController()) // 圈圈
+                3 -> ProfilePage() // 我的
             }
         }
     }

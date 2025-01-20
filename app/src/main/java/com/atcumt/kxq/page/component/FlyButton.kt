@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.atcumt.kxq.ui.theme.FlyColors
-import wdp
+import com.atcumt.kxq.utils.wdp
 
 object FlyButton {
 

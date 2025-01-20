@@ -24,7 +24,7 @@ import com.atcumt.kxq.page.component.FlyText.SubTitle
 import com.atcumt.kxq.page.component.FlyText.Title
 import com.atcumt.kxq.page.component.FlyText.WeakenButtonText
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
-import wdp
+import com.atcumt.kxq.utils.wdp
 
 @Composable
 fun LoginPage(navController: NavController) {

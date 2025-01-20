@@ -1,4 +1,4 @@
-package com.atcumt.kxq.page.HomePage
+package com.atcumt.kxq.page.home
 
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.Canvas
@@ -24,7 +24,7 @@ import com.atcumt.kxq.utils.AdaptiveScreen
 import com.atcumt.kxq.page.component.FlyText.TabText
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
 import kotlinx.coroutines.launch
-import wdp
+import com.atcumt.kxq.utils.wdp
 
 /**
  * 主页面的 Tab

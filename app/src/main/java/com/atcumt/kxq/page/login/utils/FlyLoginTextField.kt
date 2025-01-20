@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.atcumt.kxq.page.component.FlyText.TextFieldText
-import wdp
+import com.atcumt.kxq.utils.wdp
 
 @Composable
 fun FlyLoginTextField(text: String, modifier: Modifier, round:Dp = 26.wdp) {

@@ -1,11 +1,11 @@
-package com.atcumt.kxq.page.HomePage.FollowPage
+package com.atcumt.kxq.page.home.FollowPage
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import wdp
+import com.atcumt.kxq.utils.wdp
 
 @Composable
 fun FollowPage(){
