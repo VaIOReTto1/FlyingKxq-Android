@@ -1,4 +1,4 @@
-package com.atcumt.kxq.page.RegisterPage
+package com.atcumt.kxq.page.login.view.RegisterPage
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,25 +26,28 @@ import androidx.navigation.compose.rememberNavController
 import com.atcumt.kxq.R
 import com.atcumt.kxq.ui.theme.KxqTheme
 import com.atcumt.kxq.utils.AdaptiveScreen
-import com.atcumt.kxq.utils.FlyButton.FlyButton
-import com.atcumt.kxq.utils.FlyButton.FlyWeakenButton
-import com.atcumt.kxq.utils.FlyText.AppbarTitle
-import com.atcumt.kxq.utils.FlyText.ButtonText
-import com.atcumt.kxq.utils.FlyText.LabelText
-import com.atcumt.kxq.utils.FlyText.WeakenButtonText
-import com.atcumt.kxq.utils.FlyTextField
+import com.atcumt.kxq.page.component.FlyButton.FlyMainButton
+import com.atcumt.kxq.page.component.FlyButton.FlyWeakenButton
+import com.atcumt.kxq.page.component.FlyText.AppbarTitle
+import com.atcumt.kxq.page.component.FlyText.ButtonText
+import com.atcumt.kxq.page.component.FlyText.LabelText
+import com.atcumt.kxq.page.component.FlyText.WeakenButtonText
+import com.atcumt.kxq.page.login.utils.FlyLoginTextField
 import wdp
 
 @Composable
 fun RegisterPage(navController: NavController) {
     Column {
+        // 顶部导航栏部分
         TopBar(navController)
+        // 注册内容部分
         RegisterContent(navController)
     }
 }
 
 @Composable
 fun TopBar(navController: NavController) {
+    // 顶部导航栏
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -55,10 +58,10 @@ fun TopBar(navController: NavController) {
             modifier = Modifier.fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            BackButton(navController)
+            BackButton(navController) // 返回按钮
         }
         AppbarTitle(
-            text = "注册",
+            text = "注册", // 标题
             modifier = Modifier.align(Alignment.Center)
         )
     }
@@ -66,6 +69,7 @@ fun TopBar(navController: NavController) {
 
 @Composable
 fun BackButton(navController: NavController) {
+    // 返回按钮
     Image(
         painter = painterResource(id = R.drawable.round_arrow_back_ios_new_24),
         contentDescription = "back",
@@ -75,26 +79,23 @@ fun BackButton(navController: NavController) {
             .clickable(
                 indication = null,
                 interactionSource = MutableInteractionSource()
-            ) { navController.popBackStack() }
+            ) { navController.popBackStack() } // 点击返回上一页
     )
 }
 
 @Composable
 fun RegisterContent(navController: NavController) {
-    var bindQQ = false;
-    var bindSchool = false;
+    // 注册内容部分
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 52.wdp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        RegisterSection(
-            labelText = "请先点击下方按钮认证，证明您是矿大师生",
-            buttonContent = { WeakenButtonText("点我认证") },
-            onClick = { navController.navigate("register") }
-        )
+        // 认证部分
+        AuthenticationSection(navController)
 
+        // 用户输入字段
         UserInputFields(
             listOf(
                 "设置用户名（6-16位，英文数字下划线组成）" to "用户名",
@@ -103,63 +104,95 @@ fun RegisterContent(navController: NavController) {
             )
         )
 
-        RegisterSection(
-            labelText = "（可选）绑定QQ后，下次可直接用QQ登录",
-            buttonContent = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Image(
-                        painter = painterResource(id = R.drawable.qq),
-                        contentDescription = "qq",
-                        modifier = Modifier
-                            .padding(end = 7.02.wdp)
-                            .height(18.wdp)
-                    )
-                    WeakenButtonText(if (bindQQ) "认证成功 ✅" else "绑定QQ")
-                }
-            },
-            onClick = { navController.navigate("register") }
-        )
+        // 绑定 QQ 部分
+        BindQQSection(navController)
 
-        FlyButton(
+        // 注册并登录按钮
+        FlyMainButton(
             content = { ButtonText("注册并登录") },
-            modifier = Modifier.padding(top = 69.wdp).height(45.wdp).width(329.wdp),
-            onClick = {}
+            modifier = Modifier
+                .padding(top = 69.wdp)
+                .height(45.wdp)
+                .width(329.wdp),
+            onClick = {
+                // 注册逻辑处理
+            }
         )
     }
+}
+
+@Composable
+private fun AuthenticationSection(navController: NavController) {
+    // 认证部分
+    RegisterSection(
+        labelText = "请先点击下方按钮认证，证明您是矿大师生",
+        buttonContent = { WeakenButtonText("点我认证") },
+        onClick = { navController.navigate("register") }
+    )
+}
+
+@Composable
+private fun BindQQSection(navController: NavController) {
+    // 绑定 QQ 部分
+    var bindQQ = false // 绑定状态
+    RegisterSection(
+        labelText = "（可选）绑定QQ后，下次可直接用QQ登录",
+        buttonContent = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = painterResource(id = R.drawable.qq),
+                    contentDescription = "qq",
+                    modifier = Modifier
+                        .padding(end = 7.02.wdp)
+                        .height(18.wdp)
+                )
+                WeakenButtonText(if (bindQQ) "认证成功 ✅" else "绑定QQ")
+            }
+        },
+        onClick = { navController.navigate("register") }
+    )
 }
 
 @Composable
 fun RegisterSection(
     labelText: String,
     buttonContent: @Composable (() -> Unit),
-    buttonModifier: Modifier = Modifier.padding(top = 6.wdp).height(45.wdp).width(329.wdp),
+    buttonModifier: Modifier = Modifier
+        .padding(top = 6.wdp)
+        .height(45.wdp)
+        .width(329.wdp),
     onClick: () -> Unit
 ) {
+    // 通用注册部分
     Column(
         modifier = Modifier.padding(vertical = 10.wdp),
         horizontalAlignment = Alignment.Start
     ) {
-        LabelText(labelText)
+        LabelText(labelText) // 显示标签
         FlyWeakenButton(
             content = buttonContent,
             modifier = buttonModifier,
             width = 1.wdp,
-            onClick = onClick
+            onClick = onClick // 点击事件
         )
     }
 }
 
 @Composable
 fun UserInputFields(fields: List<Pair<String, String>>) {
+    // 用户输入字段部分
     fields.forEach { (label, placeholder) ->
         Column(
             modifier = Modifier.padding(vertical = 10.wdp),
             horizontalAlignment = Alignment.Start
         ) {
-            LabelText(label)
-            FlyTextField(
+            LabelText(label) // 输入框标签
+            FlyLoginTextField(
                 text = placeholder,
-                modifier = Modifier.padding(top = 6.wdp).height(45.wdp).width(329.wdp)
+                modifier = Modifier
+                    .padding(top = 6.wdp)
+                    .height(45.wdp)
+                    .width(329.wdp)
             )
         }
     }

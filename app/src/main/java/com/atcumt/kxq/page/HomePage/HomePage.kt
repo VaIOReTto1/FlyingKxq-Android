@@ -21,12 +21,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.lerp
 import com.atcumt.kxq.ui.theme.KxqTheme
 import com.atcumt.kxq.utils.AdaptiveScreen
-import com.atcumt.kxq.utils.FlyText.TabText
+import com.atcumt.kxq.page.component.FlyText.TabText
+import com.atcumt.kxq.page.login.utils.FlyLoginTextField
 import kotlinx.coroutines.launch
 import wdp
-
-// 未选中的 Tab 文本颜色
-private val unselectedContentColor = Color(0xFF999999)
 
 /**
  * 主页面的 Tab
@@ -39,40 +37,50 @@ fun HomeTab() {
     val scope = rememberCoroutineScope()
 
     Column(
-        modifier = Modifier.padding(top = 2.wdp).background(MaterialTheme.colorScheme.background)
+        modifier = Modifier.background(MaterialTheme.colorScheme.background)
     ) {
         // Tab 布局
-        TabRow(
-            modifier = Modifier
-                .padding(start = 9.wdp)
-                .width(159.wdp), // TabRow 占满宽度
-            containerColor = MaterialTheme.colorScheme.background, // 背景颜色
-            selectedTabIndex = pagerState.currentPage, // 当前选中的 Tab 索引
-            indicator = { tabPositions ->
-                if (tabPositions.isNotEmpty()) {
-                    PagerTabIndicator(tabPositions = tabPositions, pagerState = pagerState)
-                }
-            },
-            divider = {} // 去除默认分割线
-        ) {
-            homeFolders.forEachIndexed { index, title ->
-                val selected = (pagerState.currentPage == index) // 判断是否为当前选中 Tab
-                Tab(
-                    modifier = Modifier
-                        .padding(horizontal = 9.wdp)
-                        .height(25.wdp), // Tab 的高度
-                    selected = selected,
-                    selectedContentColor = MaterialTheme.colorScheme.onPrimary, // 选中颜色
-                    unselectedContentColor = MaterialTheme.colorScheme.onSecondary, // 未选中颜色
-                    onClick = {
-                        scope.launch {
-                            pagerState.animateScrollToPage(index) // 点击切换页面
-                        }
+        Row (
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 9.wdp, vertical = 2.wdp)
+        ){
+            TabRow(
+                modifier = Modifier
+                    .width(159.wdp), // TabRow 占满宽度
+                containerColor = MaterialTheme.colorScheme.background, // 背景颜色
+                selectedTabIndex = pagerState.currentPage, // 当前选中的 Tab 索引
+                indicator = { tabPositions ->
+                    if (tabPositions.isNotEmpty()) {
+                        PagerTabIndicator(tabPositions = tabPositions, pagerState = pagerState)
                     }
-                ) {
-                    TabText(text = title, isSelected = selected) // Tab 标题
+                },
+                divider = {} // 去除默认分割线
+            ) {
+                homeFolders.forEachIndexed { index, title ->
+                    val selected = (pagerState.currentPage == index) // 判断是否为当前选中 Tab
+                    Tab(
+                        modifier = Modifier
+                            .padding(horizontal = 9.wdp)
+                            .height(25.wdp), // Tab 的高度
+                        selected = selected,
+                        selectedContentColor = MaterialTheme.colorScheme.onPrimary, // 选中颜色
+                        unselectedContentColor = MaterialTheme.colorScheme.onSecondary, // 未选中颜色
+                        onClick = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(index) // 点击切换页面
+                            }
+                        }
+                    ) {
+                        TabText(text = title, isSelected = selected) // Tab 标题
+                    }
                 }
             }
+            FlyLoginTextField(
+                text = "搜索",
+                modifier = Modifier.height(30.wdp).width(116.wdp),
+                round = 15.wdp
+            )
         }
 
         // 页面内容
@@ -146,7 +154,7 @@ private fun HorizontalPagerContent(
         state = pagerState,
     ) { page ->
         Column(
-            modifier = Modifier.fillMaxSize().background(Color.Black),
+            modifier = Modifier.fillMaxSize().background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
         }

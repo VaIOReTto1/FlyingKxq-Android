@@ -59,8 +59,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("androidx.navigation:navigation-compose:2.8.5")
-    implementation(files("libs\\open_sdk_3.5.17.3_r75955a58_lite.jar"))
+    implementation("androidx.navigation:navigation-compose:2.8.5") // 导航
+    implementation(files("libs\\open_sdk_3.5.17.3_r75955a58_lite.jar")) // qq sdk
+    implementation("com.squareup.okhttp3:okhttp:4.12.0") //网络请求
+    implementation("com.squareup.okio:okio:1.12.0") //网络请求
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

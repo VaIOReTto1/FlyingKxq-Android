@@ -29,8 +29,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.atcumt.kxq.page.HomePage.HomeTab
-import com.atcumt.kxq.page.LoginPage.LoginPage
-import com.atcumt.kxq.utils.FlyText.NavBottomBarText
+import com.atcumt.kxq.page.login.view.LoginPage.LoginPage
+import com.atcumt.kxq.page.component.FlyText.NavBottomBarText
 import kotlinx.coroutines.launch
 import wdp
 

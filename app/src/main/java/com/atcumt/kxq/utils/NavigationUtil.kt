@@ -4,10 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.atcumt.kxq.page.HomePage.HomeTab
-import com.atcumt.kxq.page.LoginPage.LoginPage
+import com.atcumt.kxq.page.login.view.LoginPage.LoginPage
 import com.atcumt.kxq.page.MainPage
-import com.atcumt.kxq.page.RegisterPage.RegisterPage
+import com.atcumt.kxq.page.login.view.RegisterPage.RegisterPage
 
 @Composable
 fun NavigationSetup() {
@@ -16,7 +15,7 @@ fun NavigationSetup() {
 
     NavHost(
         navController = navController,
-        startDestination = "main"
+        startDestination = "login"
     ) {
         composable("login") {
             LoginPage(navController = navController)

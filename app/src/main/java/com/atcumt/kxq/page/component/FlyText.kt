@@ -1,4 +1,4 @@
-package com.atcumt.kxq.utils
+package com.atcumt.kxq.page.component
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text

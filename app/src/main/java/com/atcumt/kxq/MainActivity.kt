@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import com.atcumt.kxq.page.LoginPage.LoginPage
 import com.atcumt.kxq.ui.theme.KxqTheme
 import com.atcumt.kxq.utils.AdaptiveScreen
 import com.atcumt.kxq.utils.NavigationSetup

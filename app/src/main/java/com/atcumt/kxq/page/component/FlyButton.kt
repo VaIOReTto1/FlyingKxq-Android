@@ -1,4 +1,4 @@
-package com.atcumt.kxq.utils
+package com.atcumt.kxq.page.component
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -24,7 +24,7 @@ object FlyButton {
      * @param onClick 点击事件
      */
     @Composable
-    fun FlyButton(
+    fun FlyMainButton(
         content: @Composable () -> Unit,
         modifier: Modifier = Modifier,
         onClick: () -> Unit
