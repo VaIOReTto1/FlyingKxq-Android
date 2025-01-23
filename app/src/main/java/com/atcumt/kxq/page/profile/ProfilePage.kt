@@ -108,13 +108,11 @@ private fun HorizontalPagerContent(
         modifier = Modifier.fillMaxWidth(),
         beyondViewportPageCount = 1
     ) { page ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(818.wdp)
-                .nestedScroll(rememberNestedScrollInteropConnection()), // 处理嵌套滚动
         ) {
-            items(10) {
+            repeat(10) {
                 CommentCard(
                     avatarUrl = "https://qlogo2.store.qq.com/qzone/1004275481/1004275481/100",
                     name = "张三",
