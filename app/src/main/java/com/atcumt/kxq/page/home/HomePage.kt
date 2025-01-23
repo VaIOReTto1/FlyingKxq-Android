@@ -35,11 +35,8 @@ fun HomeTab() {
     val homeFolders = listOf("关注", "广场", "热搜") // Tab 的标题列表
     val pagerState =
         rememberPagerState(initialPage = 0, pageCount = { homeFolders.size }) // Pager 状态
-    val scope = rememberCoroutineScope()
 
-    Column(
-        modifier = Modifier.background(MaterialTheme.colorScheme.background)
-    ) {
+    Column{
         // Tab 布局
         Row (
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -64,7 +61,6 @@ fun HomeTab() {
 /**
  * 页面内容区域
  * @param pagerState Pager 的状态
- * @param noteFolders Tab 对应的页面内容
  */
 @Composable
 private fun HorizontalPagerContent(

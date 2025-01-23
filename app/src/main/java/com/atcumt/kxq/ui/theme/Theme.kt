@@ -20,8 +20,8 @@ private fun colorScheme(isDarkTheme: Boolean) = if (isDarkTheme) {
         surface = FlyColors.FlySecondaryBackgroundDark,
         onPrimary = FlyColors.FlyTextDark,
         onSecondary = FlyColors.FlyTextGrayDark,
-        onBackground = FlyColors.FlyTextDark,
-        onSurface = FlyColors.FlyTextDark
+        onBackground = FlyColors.FlyLightGrayDark,
+        onSurface = FlyColors.FlyLightGrayDark
     )
 } else {
     lightColorScheme(
@@ -31,8 +31,8 @@ private fun colorScheme(isDarkTheme: Boolean) = if (isDarkTheme) {
         surface = FlyColors.FlySecondaryBackgroundLight,
         onPrimary = FlyColors.FlyTextLight,
         onSecondary = FlyColors.FlyTextGrayLight,
-        onBackground = FlyColors.FlyTextLight,
-        onSurface = FlyColors.FlyTextLight
+        onBackground = FlyColors.FlyDivider,
+        onSurface = FlyColors.FlyLightGray
     )
 }
 

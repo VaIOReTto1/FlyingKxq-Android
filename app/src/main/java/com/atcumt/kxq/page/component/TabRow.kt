@@ -2,6 +2,7 @@ package com.atcumt.kxq.page.component
 
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -11,22 +12,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabPosition
 import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.lerp
+import com.atcumt.kxq.utils.ssp
 import com.atcumt.kxq.utils.wdp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun FlyTabRow(
     folders: List<String>, // 文件夹名称列表
     pagerState: PagerState, // PagerState 用于跟踪当前页面
     width: Dp, // TabRow 的宽度
-    height: Dp // TabRow 的高度
+    height: Dp, // TabRow 的高度
+    fontSize: TextUnit = 16.ssp,
+    scope: CoroutineScope = rememberCoroutineScope()
 ) {
     TabRow(
         modifier = Modifier.width(width), // TabRow 占满宽度
@@ -51,11 +61,19 @@ fun FlyTabRow(
                 selected = selected, // 当前是否选中
                 selectedContentColor = MaterialTheme.colorScheme.onPrimary, // 选中 Tab 时的文本颜色
                 unselectedContentColor = MaterialTheme.colorScheme.onSecondary, // 未选中 Tab 时的文本颜色
-                onClick = {}, // 通过 onClick 设置一个空的函数来禁用点击事件
-                enabled = false, // 禁用 Tab 的点击事件
+                onClick = {
+                          scope.launch {
+                              pagerState.animateScrollToPage(index)
+                          }
+                }, // 通过 onClick 设置一个空的函数来禁用点击事件
+//                enabled = false, // 禁用 Tab 的点击事件
             ) {
                 // Tab 标题
-                FlyText.TabText(text = title, isSelected = selected)
+                FlyText(
+                    text = title,
+                    fontWeight = if (selected) FontWeight.W600 else FontWeight.W500,
+                    fontSize = fontSize,
+                )
             }
         }
     }

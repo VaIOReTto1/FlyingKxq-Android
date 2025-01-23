@@ -63,6 +63,8 @@ dependencies {
     implementation(files("libs\\open_sdk_3.5.17.3_r75955a58_lite.jar")) // qq sdk
     implementation("com.squareup.okhttp3:okhttp:4.12.0") //网络请求
     implementation("com.squareup.okio:okio:1.12.0") //网络请求
+    implementation("io.coil-kt:coil-compose:2.6.0") // 图片加载
+    implementation("androidx.compose.material:material-icons-extended")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
