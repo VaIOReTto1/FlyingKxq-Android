@@ -1,5 +1,6 @@
 package com.atcumt.kxq.utils.network
 
+import android.util.Log
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.FormBody
@@ -16,11 +17,11 @@ import java.nio.charset.StandardCharsets
 open class ApiService {
 
     companion object {
-        const val BASE_URL_USER = "http://119.45.93.228:8080/api/user"
-        const val BASE_URL_AUTH = "http://119.45.93.228:8080/api/auth"
+        const val BASE_URL_USER = "http://119.45.93.228:8080/api/user/"
+        const val BASE_URL_AUTH = "http://119.45.93.228:8080/api/auth/"
         const val BASE_URL_MAIN = "http://119.45.93.228:8080/api/"
-        const val BASE_URL_POST = "http://119.45.93.228:8080/api//post"
-        const val BASE_URL_LIKE = "http://119.45.93.228:8080/api//like"
+        const val BASE_URL_POST = "http://119.45.93.228:8080/api//post/"
+        const val BASE_URL_LIKE = "http://119.45.93.228:8080/api//like/"
     }
 
     private val client = OkHttpClient()
@@ -90,6 +91,7 @@ open class ApiService {
             }
 
             override fun onResponse(call: Call, response: Response) {
+                Log.d("NetworkLog", "Received login response: $response")
                 callback(response.body?.string(), null)
             }
         })

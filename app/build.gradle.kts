@@ -65,6 +65,7 @@ dependencies {
     implementation("com.squareup.okio:okio:1.12.0") //网络请求
     implementation("io.coil-kt:coil-compose:2.6.0") // 图片加载
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.webkit:webkit:1.12.1") // webview
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

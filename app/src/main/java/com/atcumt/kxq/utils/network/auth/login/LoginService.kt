@@ -1,8 +1,14 @@
 package com.atcumt.kxq.utils.network.auth.login
 
+import android.util.Log
 import com.atcumt.kxq.utils.network.ApiService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
 
@@ -42,20 +48,39 @@ class LoginService : ApiService() {
             .add("Accept", "*/*")
             .build()
 
-        // 构建请求体
-        val formBody = FormBody.Builder()
-            .add("username", loginRequest.username)
-            .add("password", loginRequest.password)
-            .build()
+        // 构建 JSON 请求体
+        val jsonRequest = """
+        {
+            "username": "${loginRequest.username}",
+            "password": "${loginRequest.password}"
+        }
+        """.trimIndent()
 
-        val url = buildUrlWithParams(BASE_URL_AUTH, "login/username")
+        val requestBody: RequestBody =
+            jsonRequest.toRequestBody("application/json".toMediaTypeOrNull())
+
+        val url = buildUrlWithParams(BASE_URL_AUTH, "v1/login/username")
+
         // 调用父类的 POST 方法
-        post(url, headers, formBody) { response, error ->
+        post(url, headers, requestBody) { response, error ->
             if (error != null) {
                 callback(null, error)
             } else {
                 val parsedResponse = response?.let { parseLoginResponse(it) }
                 callback(parsedResponse, null)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun loginBlocking(request: LoginRequest): LoginAPIResponse {
+        return suspendCancellableCoroutine { cont ->
+            login(request) { response, error ->
+                if (error != null) {
+                    cont.resumeWith(Result.failure(error))
+                } else {
+                    cont.resume(response!!, null)
+                }
             }
         }
     }

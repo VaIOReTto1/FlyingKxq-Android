@@ -1,8 +1,13 @@
 package com.atcumt.kxq.utils.network.auth
 
 import com.atcumt.kxq.utils.network.ApiService
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.FormBody
 import okhttp3.Headers
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
 
@@ -16,7 +21,7 @@ class RegisterService : ApiService() {
         val username: String,                 // 用户名
         val password: String,                 // 密码
         val qqAuthorizationCode: String?,     // QQ 授权码，可选
-        val appleAuthorizationCode: String?   // Apple 授权码，可选
+        val appleAuthorizationCode: String? = null,   // Apple 授权码，可选
     )
 
     // 定义注册响应的数据类
@@ -33,6 +38,19 @@ class RegisterService : ApiService() {
         val userId: String?        // 用户 ID
     )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun registerBlocking(request: RegisterRequest): RegisterResponse {
+        return suspendCancellableCoroutine { cont ->
+            register(request) { response, error ->
+                if (error != null) {
+                    cont.resumeWith(Result.failure(error))
+                } else {
+                    cont.resume(response!!, null)
+                }
+            }
+        }
+    }
+
     // 注册方法
     fun register(
         registerRequest: RegisterRequest,
@@ -45,21 +63,31 @@ class RegisterService : ApiService() {
             .add("Accept", "*/*")
             .build()
 
-        // 构建请求体
-        val formBody = FormBody.Builder()
-            .add("unifiedAuthToken", registerRequest.unifiedAuthToken)
-            .add("username", registerRequest.username)
-            .add("password", registerRequest.password)
-            .apply {
-                registerRequest.qqAuthorizationCode?.let { add("qqAuthorizationCode", it) }
-                registerRequest.appleAuthorizationCode?.let { add("appleAuthorizationCode", it) }
-            }
-            .build()
+        val jsonRequest = buildString {
+            append("{")
+            append("\"unifiedAuthToken\": \"${registerRequest.unifiedAuthToken}\",")
+            append("\"username\": \"${registerRequest.username}\",")
+            append("\"password\": \"${registerRequest.password}\"")
 
-        val url = buildUrlWithParams(BASE_URL_AUTH, "register")
+            // 只在字段不为空时添加
+            registerRequest.qqAuthorizationCode?.let {
+                append(", \"qqAuthorizationCode\": \"$it\"")
+            }
+            registerRequest.appleAuthorizationCode?.let {
+                append(", \"appleAuthorizationCode\": \"$it\"")
+            }
+
+            append("}")
+        }
+
+        // 创建 JSON 请求体
+        val requestBody: RequestBody =
+            jsonRequest.toRequestBody("application/json".toMediaTypeOrNull())
+
+        val url = buildUrlWithParams(BASE_URL_AUTH, "v1/register")
 
         // 调用父类的 POST 方法
-        post(url, headers, formBody) { response, error ->
+        post(url, headers, requestBody) { response, error ->
             if (error != null) {
                 callback(null, error)
             } else {

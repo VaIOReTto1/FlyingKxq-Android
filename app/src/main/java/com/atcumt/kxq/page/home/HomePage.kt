@@ -25,6 +25,7 @@ import com.atcumt.kxq.page.component.FlyTabRow
 import com.atcumt.kxq.ui.theme.KxqTheme
 import com.atcumt.kxq.utils.AdaptiveScreen
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
+import com.atcumt.kxq.page.profile.ProfilePage
 import com.atcumt.kxq.utils.wdp
 
 /**
@@ -45,7 +46,7 @@ fun HomeTab() {
         ){
             FlyTabRow(homeFolders,pagerState,159.wdp,25.wdp)
             FlyLoginTextField(
-                text = "搜索",
+                value = "搜索",
                 modifier = Modifier.height(30.wdp).width(116.wdp),
                 round = 15.wdp
             )
@@ -73,6 +74,7 @@ private fun HorizontalPagerContent(
             modifier = Modifier.fillMaxSize().background(Color.White),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            ProfilePage()
         }
     }
 }

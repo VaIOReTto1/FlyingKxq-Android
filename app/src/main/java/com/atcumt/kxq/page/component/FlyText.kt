@@ -30,7 +30,7 @@ fun FlyText(
     textDecoration: TextDecoration? = null,
     textAlign: TextAlign? = null,
     lineHeight: TextUnit = TextUnit.Unspecified,
-    overflow: TextOverflow = TextOverflow.Clip,
+    overflow: TextOverflow = TextOverflow.Ellipsis,
     softWrap: Boolean = true,
     maxLines: Int = Int.MAX_VALUE,
     minLines: Int = 1,
@@ -107,7 +107,7 @@ object FlyText {
     @Composable
     fun ButtonText(text: String, modifier: Modifier = Modifier) {
         Text(
-            text = text, color = FlyColors.FlyTextDark,
+            text = text, color = FlyColors.FlyBackground,
             style = MaterialTheme.typography.bodyMedium,
             modifier = modifier
         )

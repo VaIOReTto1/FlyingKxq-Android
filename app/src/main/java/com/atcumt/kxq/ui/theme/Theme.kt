@@ -12,25 +12,26 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 // 统一定义颜色方案
+@Composable
 private fun colorScheme(isDarkTheme: Boolean) = if (isDarkTheme) {
     darkColorScheme(
         primary = FlyColors.FlyMain,
         secondary = FlyColors.FlyMainLight,
-        background = FlyColors.FlyBackgroundDark,
-        surface = FlyColors.FlySecondaryBackgroundDark,
-        onPrimary = FlyColors.FlyTextDark,
-        onSecondary = FlyColors.FlyTextGrayDark,
-        onBackground = FlyColors.FlyLightGrayDark,
-        onSurface = FlyColors.FlyLightGrayDark
+        background = FlyColors.FlyBackground,
+        surface = FlyColors.FlySecondaryBackground,
+        onPrimary = FlyColors.FlyText,
+        onSecondary = FlyColors.FlyTextGray,
+        onBackground = FlyColors.FlyLightGray,
+        onSurface = FlyColors.FlyLightGray
     )
 } else {
     lightColorScheme(
         primary = FlyColors.FlyMain,
         secondary = FlyColors.FlyMainLight,
-        background = FlyColors.FlyBackgroundLight,
-        surface = FlyColors.FlySecondaryBackgroundLight,
-        onPrimary = FlyColors.FlyTextLight,
-        onSecondary = FlyColors.FlyTextGrayLight,
+        background = FlyColors.FlyBackground,
+        surface = FlyColors.FlySecondaryBackground,
+        onPrimary = FlyColors.FlyText,
+        onSecondary = FlyColors.FlyTextGray,
         onBackground = FlyColors.FlyDivider,
         onSurface = FlyColors.FlyLightGray
     )

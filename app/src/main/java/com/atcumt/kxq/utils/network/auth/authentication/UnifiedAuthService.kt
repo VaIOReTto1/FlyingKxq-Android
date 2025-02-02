@@ -40,7 +40,7 @@ class UnifiedAuthService : ApiService() {
             .build()
 
         // 构建 URL
-        val url = buildUrlWithParams(BASE_URL_AUTH, "authentication/unifiedAuth")
+        val url = buildUrlWithParams(BASE_URL_AUTH, "v1/authentication/unifiedAuth")
 
         // 调用父类的 POST 方法
         post(url, headers) { response, error ->

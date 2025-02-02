@@ -1,19 +1,35 @@
 package com.atcumt.kxq.ui.theme
 
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-
 object FlyColors {
-    val FlyMain = Color(0xFF1EA59E)
-    val FlyMainLight = Color(0xFF28CCC3)
-    val FlyDivider = Color(0xFFF7F7F8)
-    val FlySecondaryBackgroundLight = Color(0xFFF7F7F8)
-    val FlyBackgroundLight = Color(0xFFFFFFFF)
-    val FlyTextGrayLight = Color(0xFF7F7F7F)
-    val FlyTextLight = Color(0xFF000000)
-    val FlySecondaryBackgroundDark = Color(0xFF1C1C1E)
-    val FlyBackgroundDark = Color(0xFF000000)
-    val FlyTextGrayDark = Color(0xFF97989F)
-    val FlyTextDark = Color(0xFFFFFFFF)
-    val FlyLightGray = Color(0xFFDDDDDD)
-    val FlyLightGrayDark = Color(0xFF1C1C1E)
+    val FlyMain: Color
+        @Composable get() = Color(0xFF1EA59E)
+
+    val FlyMainLight: Color
+        @Composable get() = Color(0xFF28CCC3)
+
+    val FlyDivider: Color
+        @Composable get() = dynamicColor(light = Color(0xFFF7F7F8), dark = Color(0xFF1C1C1E))
+
+    val FlySecondaryBackground: Color
+        @Composable get() = dynamicColor(light = Color(0xFFF7F7F8), dark = Color(0xFF1C1C1E))
+
+    val FlyBackground: Color
+        @Composable get() = dynamicColor(light = Color(0xFFFFFFFF), dark = Color(0xFF000000))
+
+    val FlyTextGray: Color
+        @Composable get() = dynamicColor(light = Color(0xFF7F7F7F), dark = Color(0xFF97989F))
+
+    val FlyText: Color
+        @Composable get() = dynamicColor(light = Color(0xFF000000), dark = Color(0xFFFFFFFF))
+
+    val FlyLightGray: Color
+        @Composable get() = dynamicColor(light = Color(0xFFDDDDDD), dark = Color(0xFF1C1C1E))
+}
+
+@Composable
+fun dynamicColor(light: Color, dark: Color): Color {
+    return if (isSystemInDarkTheme()) dark else light
 }

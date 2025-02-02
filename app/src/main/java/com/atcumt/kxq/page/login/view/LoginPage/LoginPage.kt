@@ -1,5 +1,7 @@
 package com.atcumt.kxq.page.login.view.LoginPage
 
+import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,9 +10,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -23,11 +32,39 @@ import com.atcumt.kxq.page.component.FlyText.LabelText
 import com.atcumt.kxq.page.component.FlyText.SubTitle
 import com.atcumt.kxq.page.component.FlyText.Title
 import com.atcumt.kxq.page.component.FlyText.WeakenButtonText
+import com.atcumt.kxq.page.login.ViewModel.LoginEvent
+import com.atcumt.kxq.page.login.ViewModel.LoginIntent
+import com.atcumt.kxq.page.login.ViewModel.LoginViewModel
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
 import com.atcumt.kxq.utils.wdp
 
 @Composable
-fun LoginPage(navController: NavController) {
+fun LoginPage(
+    navController: NavController,
+    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    val context = LocalContext.current
+
+    // 监听一次性事件（用于显示Toast和导航）
+    LaunchedEffect(Unit) {
+        viewModel.eventFlow.collect { event ->
+            when (event) {
+                is LoginEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                    Log.d("internet", event.message)
+                }
+
+                is LoginEvent.NavigateTo -> {
+                    navController.navigate(event.route) {
+                        // 清除栈中的所有页面，只有当前页面留在栈中
+                        if (event.route == "main")
+                            popUpTo("login") { inclusive = true }
+                    }
+                }
+            }
+        }
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -38,7 +75,7 @@ fun LoginPage(navController: NavController) {
         WelcomeSection()
 
         // 登录表单部分
-        LoginFormSection(navController)
+        LoginForm(viewModel)
 
         // 隐私政策与小圆圈部分
         PrivacyAndIconSection()
@@ -56,7 +93,12 @@ private fun WelcomeSection() {
 }
 
 @Composable
-private fun LoginFormSection(navController: NavController) {
+fun LoginForm(
+    viewModel: LoginViewModel
+) {
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+
     // 登录表单部分
     Column(
         modifier = Modifier
@@ -66,19 +108,23 @@ private fun LoginFormSection(navController: NavController) {
     ) {
         // 用户名输入框
         FlyLoginTextField(
-            text = "用户名",
+            value = username, // 绑定到状态
+            onValueChange = { username = it }, // 更新状态
             modifier = Modifier
                 .height(45.wdp)
-                .width(329.wdp)
+                .width(329.wdp),
+            placeText = "用户名"
         )
         Spacer(modifier = Modifier.padding(top = 19.wdp))
 
         // 密码输入框
         FlyLoginTextField(
-            text = "密码",
+            value = password, // 绑定到状态
+            onValueChange = { password = it }, // 更新状态
             modifier = Modifier
                 .height(45.wdp)
-                .width(329.wdp)
+                .width(329.wdp),
+            placeText = "密码"
         )
 
         // 登录和注册按钮
@@ -89,7 +135,12 @@ private fun LoginFormSection(navController: NavController) {
                 .height(45.wdp)
                 .width(216.wdp),
             onClick = {
-                navController.navigate("main") // 点击后导航到主页面
+                viewModel.intentChannel.trySend(
+                    LoginIntent.Login(
+                        username,
+                        password
+                    )
+                )
             }
         )
         Spacer(modifier = Modifier.padding(top = 19.wdp))
@@ -99,11 +150,12 @@ private fun LoginFormSection(navController: NavController) {
                 .height(45.wdp)
                 .width(216.wdp),
             onClick = {
-                navController.navigate("register") // 点击后导航到注册页面
+                viewModel.intentChannel.trySend(LoginIntent.NavigateToRegister)
             }
         )
     }
 }
+
 
 @Composable
 private fun PrivacyAndIconSection() {

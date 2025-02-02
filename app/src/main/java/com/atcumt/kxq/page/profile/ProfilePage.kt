@@ -1,5 +1,6 @@
 package com.atcumt.kxq.page.profile
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,30 +28,23 @@ import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.rememberNestedScrollInteropConnection
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
-import coil.compose.rememberImagePainter
 import coil.memory.MemoryCache
 import coil.request.ImageRequest
 import com.atcumt.kxq.R
 import com.atcumt.kxq.page.component.FlyButton.FlyWeakenButton
+import com.atcumt.kxq.page.component.FlyDivider
 import com.atcumt.kxq.page.component.FlyTabRow
 import com.atcumt.kxq.page.component.FlyText
 import com.atcumt.kxq.page.component.FlyText.AppbarTitle
@@ -58,6 +52,7 @@ import com.atcumt.kxq.page.component.FlyText.SignalText
 import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.ui.theme.KxqTheme
 import com.atcumt.kxq.utils.AdaptiveScreen
+import com.atcumt.kxq.utils.NavViewModel
 import com.atcumt.kxq.utils.ssp
 import com.atcumt.kxq.utils.wdp
 
@@ -112,7 +107,7 @@ private fun HorizontalPagerContent(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            repeat(10) {
+            repeat(20) {
                 CommentCard(
                     avatarUrl = "https://qlogo2.store.qq.com/qzone/1004275481/1004275481/100",
                     name = "张三",
@@ -128,6 +123,7 @@ private fun HorizontalPagerContent(
 
 @Composable
 fun ProfileHeaders() {
+    val navController = NavViewModel.navController.value
     Column(
         modifier = Modifier
             .padding(top = 13.4.wdp, end = 20.wdp, start = 24.wdp, bottom = 32.wdp),
@@ -145,15 +141,29 @@ fun ProfileHeaders() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher_foreground), // 可以替换为实际的图片资源
-                contentDescription = "profile_picture",
+                painter = rememberAsyncImagePainter(
+                    ImageRequest.Builder(LocalContext.current)
+                        .data("https://qlogo2.store.qq.com/qzone/1004275481/1004275481/100")
+                        .apply {
+                            crossfade(true)
+                            placeholder(R.drawable.ic_launcher_foreground)
+                            error(R.drawable.ic_launcher_foreground)
+                            // 关键优化：缩小图片尺寸到实际显示大小
+                            size(13) // 单位：像素（根据实际需求调整）
+                            // 可选：启用内存缓存
+                            memoryCacheKey(
+                                MemoryCache.Key("https://qlogo2.store.qq.com/qzone/1004275481/1004275481/100")
+                            )
+                        }.build()
+                ),
+                contentDescription = "avatar",
                 modifier = Modifier
-                    .padding(end = 8.wdp)
+                    .padding(vertical = 12.wdp)
                     .clip(CircleShape)
                     .background(Color.Black)
                     .width(60.wdp)
                     .height(60.wdp), // 圆形裁剪
-                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onPrimary)
+                contentScale = ContentScale.Crop
             )
             Column {
                 AppbarTitle(text = "Kxq", modifier = Modifier.height(22.wdp))
@@ -165,7 +175,10 @@ fun ProfileHeaders() {
                 modifier = Modifier.width(77.wdp).height(26.wdp),
                 round = 13.wdp,
                 width = 1.wdp,
-                onClick = {},
+                onClick = {
+                    Log.d("navC",navController.toString())
+                    navController?.navigate("name")
+                },
                 content = {
                     FlyText(text = "编辑资料", fontSize = 12.ssp, color = FlyColors.FlyMain)
                 }
@@ -244,7 +257,7 @@ fun CommentCard(
                             placeholder(R.drawable.ic_launcher_foreground)
                             error(R.drawable.ic_launcher_foreground)
                             // 关键优化：缩小图片尺寸到实际显示大小
-                            size(13, 13) // 单位：像素（根据实际需求调整）
+                            size(13) // 单位：像素（根据实际需求调整）
                             // 可选：启用内存缓存
                             memoryCacheKey(MemoryCache.Key(avatarUrl))
                         }.build()
@@ -300,12 +313,7 @@ fun CommentCard(
                 fontSize = 12.ssp,
             )
         }
-        Divider(
-            modifier = Modifier
-                .fillMaxWidth(),
-            color = MaterialTheme.colorScheme.onBackground,  // 颜色设置
-            thickness = 1.wdp  // 分割线厚度
-        )
+        FlyDivider()
     }
 }
 

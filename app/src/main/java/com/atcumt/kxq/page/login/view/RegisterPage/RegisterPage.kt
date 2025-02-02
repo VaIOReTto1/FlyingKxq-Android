@@ -16,9 +16,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
@@ -32,7 +35,10 @@ import com.atcumt.kxq.page.component.FlyText.AppbarTitle
 import com.atcumt.kxq.page.component.FlyText.ButtonText
 import com.atcumt.kxq.page.component.FlyText.LabelText
 import com.atcumt.kxq.page.component.FlyText.WeakenButtonText
+import com.atcumt.kxq.page.login.ViewModel.RegisterIntent
+import com.atcumt.kxq.page.login.ViewModel.RegisterViewModel
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
+import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.utils.wdp
 
 @Composable
@@ -41,7 +47,7 @@ fun RegisterPage(navController: NavController) {
         // 顶部导航栏部分
         TopBar(navController)
         // 注册内容部分
-        RegisterContent(navController)
+        RegisterContent(navController=navController)
     }
 }
 
@@ -52,7 +58,7 @@ fun TopBar(navController: NavController) {
         modifier = Modifier
             .fillMaxWidth()
             .height(52.wdp)
-            .background(Color.White)
+            .background(FlyColors.FlyBackground)
     ) {
         Row(
             modifier = Modifier.fillMaxSize(),
@@ -79,13 +85,16 @@ fun BackButton(navController: NavController) {
             .clickable(
                 indication = null,
                 interactionSource = MutableInteractionSource()
-            ) { navController.popBackStack() } // 点击返回上一页
+            ) { navController.popBackStack() }, // 点击返回上一页
+        colorFilter = ColorFilter.tint(FlyColors.FlyText)
     )
 }
 
 @Composable
-fun RegisterContent(navController: NavController) {
-    // 注册内容部分
+fun RegisterContent(viewModel: RegisterViewModel = RegisterViewModel(), navController: NavController) {
+    val username by remember { mutableStateOf("") }
+    val password by remember { mutableStateOf("") }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -104,10 +113,7 @@ fun RegisterContent(navController: NavController) {
             )
         )
 
-        // 绑定 QQ 部分
-        BindQQSection(navController)
-
-        // 注册并登录按钮
+        // 注册按钮
         FlyMainButton(
             content = { ButtonText("注册并登录") },
             modifier = Modifier
@@ -115,11 +121,12 @@ fun RegisterContent(navController: NavController) {
                 .height(45.wdp)
                 .width(329.wdp),
             onClick = {
-                // 注册逻辑处理
+                viewModel.intentChannel.trySend(RegisterIntent.Register(username, password))
             }
         )
     }
 }
+
 
 @Composable
 private fun AuthenticationSection(navController: NavController) {
@@ -127,7 +134,7 @@ private fun AuthenticationSection(navController: NavController) {
     RegisterSection(
         labelText = "请先点击下方按钮认证，证明您是矿大师生",
         buttonContent = { WeakenButtonText("点我认证") },
-        onClick = { navController.navigate("register") }
+        onClick = { navController.navigate("school") }
     )
 }
 
@@ -188,7 +195,7 @@ fun UserInputFields(fields: List<Pair<String, String>>) {
         ) {
             LabelText(label) // 输入框标签
             FlyLoginTextField(
-                text = placeholder,
+                value = placeholder,
                 modifier = Modifier
                     .padding(top = 6.wdp)
                     .height(45.wdp)
