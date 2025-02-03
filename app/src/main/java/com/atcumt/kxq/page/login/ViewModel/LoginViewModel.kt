@@ -1,15 +1,19 @@
 package com.atcumt.kxq.page.login.ViewModel
 
 import android.os.Build
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavController
 import com.atcumt.kxq.utils.network.auth.login.LoginService
+import com.atcumt.kxq.utils.network.user.info.me.UserInfoService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // 表示UI的不同状态
 sealed class LoginState {
@@ -20,12 +24,12 @@ sealed class LoginState {
 }
 
 // 一次性事件密封类（新增）
-sealed class LoginEvent {
+sealed class Event {
     /** 显示Toast通知 */
-    data class ShowToast(val message: String) : LoginEvent()
+    data class ShowToast(val message: String) : Event()
 
     /** 导航到指定路由 */
-    data class NavigateTo(val route: String) : LoginEvent()
+    data class NavigateTo(val route: String) : Event()
 }
 
 // 表示用户交互意图
@@ -46,7 +50,7 @@ class LoginViewModel : ViewModel() {
     val password: StateFlow<String> = _password
 
     // 事件通道（用于一次性事件）
-    private val _eventChannel = Channel<LoginEvent>()
+    private val _eventChannel = Channel<Event>()
     val eventFlow = _eventChannel.receiveAsFlow()
 
     // 接收用户意图
@@ -67,42 +71,55 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    /** 更新用户名 */
-    fun updateUsername(username: String) {
-        _username.value = username
-    }
-
-    /** 更新密码 */
-    fun updatePassword(password: String) {
-        _password.value = password
-    }
-
     private fun handleLogin(username: String, password: String) {
         viewModelScope.launch {
             _state.value = LoginState.Loading
             try {
-                val response = LoginService().loginBlocking(
-                    LoginService.LoginRequest(
-                        deviceType = "${Build.MANUFACTURER} ${Build.MODEL}",
-                        username = username,
-                        password = password
+                // 1. 登录请求
+                val loginResponse = withContext(Dispatchers.IO) {
+                    LoginService().loginBlocking(
+                        LoginService.LoginRequest(
+                            deviceType = "${Build.MANUFACTURER} ${Build.MODEL}",
+                            username = username,
+                            password = password
+                        )
                     )
-                )
-                if (response.code == 200) {
-                    _eventChannel.send(LoginEvent.NavigateTo("main"))
-                    _eventChannel.send(LoginEvent.ShowToast("登录成功！"))
+                }
+
+                if (loginResponse.code == 200) {
+                    // 2. 异步获取用户信息
+                    launch(Dispatchers.IO) {
+                        try {
+                            loginResponse.data?.accessToken?.let {
+                                UserInfoService().getUserInfoBlocking(
+                                    it
+                                )
+                            }
+                            withContext(Dispatchers.Main) {
+                                // 3. 更新UI状态
+                                _eventChannel.send(Event.NavigateTo("main"))
+                                _eventChannel.send(Event.ShowToast("登录成功！"))
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                _eventChannel.send(Event.ShowToast("用户信息获取失败: ${e.message}"))
+                            }
+                        }
+                    }
                 } else {
-                    _eventChannel.send(LoginEvent.ShowToast(response.msg ?: "登录失败"))
+                    _eventChannel.send(Event.ShowToast(loginResponse.msg ?: "登录失败"))
                 }
             } catch (e: Exception) {
-                _eventChannel.send(LoginEvent.ShowToast("网络异常：${e.localizedMessage}"))
+                _eventChannel.send(Event.ShowToast("网络异常：${e.localizedMessage}"))
+            } finally {
+                _state.value = LoginState.Idle
             }
         }
     }
 
     private fun navigateToRegister() {
         viewModelScope.launch {
-            _eventChannel.send(LoginEvent.NavigateTo("register"))
+            _eventChannel.send(Event.NavigateTo("register"))
         }
     }
 }

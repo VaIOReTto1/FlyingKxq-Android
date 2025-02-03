@@ -84,6 +84,8 @@ open class ApiService {
             .headers(headers)
             .post(body)
             .build()
+        Log.d("NetworkLog", "Received login request: $request")
+
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {

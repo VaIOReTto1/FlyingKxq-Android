@@ -66,6 +66,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0") // 图片加载
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.webkit:webkit:1.12.1") // webview
+    implementation("androidx.compose.runtime:runtime-livedata")// livedata
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

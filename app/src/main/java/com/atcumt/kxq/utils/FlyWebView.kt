@@ -15,12 +15,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 
-typealias CookieHandler = (url: String?, cookies: List<String>) -> Unit
-
 @Composable
 fun FlyWebView(
     url: String,
-    handleCookies: CookieHandler? = null
+    handleCookies: (cookies: List<String>, url: String) -> Unit
 ) {
     val isLoading = remember { mutableStateOf(true) }
     val progress = remember { mutableFloatStateOf(0.0F) }
@@ -61,9 +59,13 @@ fun FlyWebView(
                         // 获取 cookies
                         val cookieManager = CookieManager.getInstance()
                         val cookies = cookieManager.getCookie(url).split(";").map { it.trim() }
-                        handleCookies?.invoke(url, cookies)
                         // 记录获取的 cookies
                         Log.d("FlyWebView", "获取到的 cookies: $cookies")
+
+                        if (url != null) {
+                            handleCookies(cookies, url)
+                        }
+
                     }
                 }
                 // 加载 URL

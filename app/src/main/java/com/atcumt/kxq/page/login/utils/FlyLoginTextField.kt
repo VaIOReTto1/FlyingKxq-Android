@@ -68,12 +68,7 @@ fun FlyLoginTextField(
                 color = FlyColors.FlyTextGray,
                 textAlign = TextAlign.Center
             ),
-            modifier = Modifier.onFocusChanged { focusState ->
-                // 处理焦点变化，失去焦点时显示占位符
-                if (!focusState.isFocused && value.isEmpty()) {
-                    focusManager.clearFocus() // 手动清除焦点
-                }
-            }.focusRequester(focusRequester)
+            modifier = Modifier.focusRequester(focusRequester)
                 .onFocusChanged { focusState ->
                     // 监听焦点变化
                     hasFocus = focusState.isFocused

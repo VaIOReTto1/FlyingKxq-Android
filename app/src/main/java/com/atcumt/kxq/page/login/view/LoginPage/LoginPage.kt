@@ -32,7 +32,7 @@ import com.atcumt.kxq.page.component.FlyText.LabelText
 import com.atcumt.kxq.page.component.FlyText.SubTitle
 import com.atcumt.kxq.page.component.FlyText.Title
 import com.atcumt.kxq.page.component.FlyText.WeakenButtonText
-import com.atcumt.kxq.page.login.ViewModel.LoginEvent
+import com.atcumt.kxq.page.login.ViewModel.Event
 import com.atcumt.kxq.page.login.ViewModel.LoginIntent
 import com.atcumt.kxq.page.login.ViewModel.LoginViewModel
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
@@ -43,19 +43,18 @@ fun LoginPage(
     navController: NavController,
     viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
 ) {
-    val state by viewModel.state.collectAsState()
     val context = LocalContext.current
 
     // 监听一次性事件（用于显示Toast和导航）
     LaunchedEffect(Unit) {
         viewModel.eventFlow.collect { event ->
             when (event) {
-                is LoginEvent.ShowToast -> {
+                is Event.ShowToast -> {
                     Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
                     Log.d("internet", event.message)
                 }
 
-                is LoginEvent.NavigateTo -> {
+                is Event.NavigateTo -> {
                     navController.navigate(event.route) {
                         // 清除栈中的所有页面，只有当前页面留在栈中
                         if (event.route == "main")

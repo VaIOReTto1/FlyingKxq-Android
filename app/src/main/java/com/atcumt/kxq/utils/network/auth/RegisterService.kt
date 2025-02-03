@@ -1,5 +1,6 @@
 package com.atcumt.kxq.utils.network.auth
 
+import android.util.Log
 import com.atcumt.kxq.utils.network.ApiService
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -21,7 +22,6 @@ class RegisterService : ApiService() {
         val username: String,                 // 用户名
         val password: String,                 // 密码
         val qqAuthorizationCode: String?,     // QQ 授权码，可选
-        val appleAuthorizationCode: String? = null,   // Apple 授权码，可选
     )
 
     // 定义注册响应的数据类
@@ -72,9 +72,6 @@ class RegisterService : ApiService() {
             // 只在字段不为空时添加
             registerRequest.qqAuthorizationCode?.let {
                 append(", \"qqAuthorizationCode\": \"$it\"")
-            }
-            registerRequest.appleAuthorizationCode?.let {
-                append(", \"appleAuthorizationCode\": \"$it\"")
             }
 
             append("}")
