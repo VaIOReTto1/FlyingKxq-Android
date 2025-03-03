@@ -2,37 +2,39 @@ package com.atcumt.kxq.utils.network.auth
 
 import com.atcumt.kxq.utils.network.ApiServiceS
 import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_AUTH
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.json.JSONObject
+import java.lang.Exception
 
-// 定义注册请求服务
 class RegisterService {
-
-    // 定义注册请求的数据类
+    // region 数据结构
     data class RegisterRequest(
-        val deviceType: String,               // 设备类型
-        val unifiedAuthToken: String,         // 统一认证令牌
-        val username: String,                 // 用户名
-        val password: String,                 // 密码
-        val qqAuthorizationCode: String?      // QQ 授权码，可选
+        @SerializedName("deviceType") val deviceType: String,
+        @SerializedName("unifiedAuthToken") val unifiedAuthToken: String,
+        @SerializedName("username") val username: String,
+        @SerializedName("password") val password: String,
+        @SerializedName("qqAuthorizationCode") val qqAuthorizationCode: String?
     )
 
-    // 定义注册响应的数据类
     data class RegisterResponse(
-        val code: Int?,            // 响应码
-        val msg: String?,          // 消息
-        val data: RegisterResponseData? // 数据部分
-    )
+        @SerializedName("code") val code: Int?,
+        @SerializedName("msg") val msg: String?,
+        @SerializedName("data") val data: RegisterData?
+    ) {
+        val isSuccess: Boolean get() = code == 200
+    }
 
-    data class RegisterResponseData(
-        val accessToken: String?,  // 访问令牌
-        val expiresIn: Long?,      // 有效时间
-        val refreshToken: String?, // 刷新令牌
-        val userId: String?        // 用户 ID
+    data class RegisterData(
+        @SerializedName("accessToken") val accessToken: String?,
+        @SerializedName("expiresIn") val expiresIn: Long?,
+        @SerializedName("refreshToken") val refreshToken: String?,
+        @SerializedName("userId") val userId: String?
     )
+    // endregion
 
-    // 本地数据
+    // region 本地数据
     private val localResponse = """
         {
             "code": 200,
@@ -45,60 +47,34 @@ class RegisterService {
             }
         }
     """
+    // endregion
 
-    // 注册方法
+    // region 网络请求
     fun register(
-        registerRequest: RegisterRequest,
+        request: RegisterRequest,
         callback: (RegisterResponse?, Throwable?) -> Unit
     ) {
-        // 设置请求头
-        val headers = mapOf(
-            "Device-Type" to registerRequest.deviceType,
-            "Content-Type" to "application/json",
-            "Accept" to "*/*"
-        )
-
-        // 构建请求体
-//        val requestBody = buildString {
-//            append("{")
-//            append("\"unifiedAuthToken\": \"${registerRequest.unifiedAuthToken}\",")
-//            append("\"username\": \"${registerRequest.username}\",")
-//            append("\"password\": \"${registerRequest.password}\"")
-//
-//            // 只在字段不为空时添加
-//            registerRequest.qqAuthorizationCode?.let {
-//                append(", \"qqAuthorizationCode\": \"$it\"")
-//            }
-//
-//            append("}")
-//        }
-
         val requestBody = mutableMapOf<String, String>().apply {
-            put("unifiedAuthToken", registerRequest.unifiedAuthToken)
-            put("username", registerRequest.username)
-            put("password", registerRequest.password)
+            put("unifiedAuthToken", request.unifiedAuthToken)
+            put("username", request.username)
+            put("password", request.password)
             // 只在字段不为空时添加
-            registerRequest.qqAuthorizationCode?.let {
+            request.qqAuthorizationCode?.let {
                 put("qqAuthorizationCode", it)
             }
         }
 
-        // 调用 ApiServiceS 的 POST 方法
         ApiServiceS.post(
-            BASE_URL_AUTH,
-            "v1/register",
-            requestBody,
-            headers
+            baseUrl = BASE_URL_AUTH,
+            endpoint = "v1/register",
+            params = requestBody, // 自动序列化对象
+            headers = mapOf(
+                "Device-Type" to request.deviceType,
+                "Content-Type" to "application/json",
+                "Accept" to "*/*"
+            )
         ) { response, error ->
-            if (error != null) {
-                // 网络请求失败时，返回本地数据
-                val localParsedResponse = parseRegisterResponse(localResponse)
-                callback(localParsedResponse, null)
-            } else {
-                // 网络请求成功时，解析响应
-                val parsedResponse = response?.let { parseRegisterResponse(it) }
-                callback(parsedResponse, null)
-            }
+            handleResponse(response, error, callback)
         }
     }
 
@@ -107,37 +83,37 @@ class RegisterService {
         return suspendCancellableCoroutine { cont ->
             register(request) { response, error ->
                 if (error != null) {
-                    // 网络请求失败时，返回本地数据
-                    val localParsedResponse = parseRegisterResponse(localResponse)
-                    cont.resume(localParsedResponse!!, null)
+                    cont.resumeWith(Result.success(parseLocalData()))
                 } else {
-                    // 网络请求成功时，返回响应
-                    cont.resume(response!!, null)
+                    response?.let { cont.resumeWith(Result.success(it)) }
+                        ?: cont.resumeWith(Result.success(parseLocalData()))
                 }
             }
         }
     }
+    // endregion
 
-    // 解析注册响应
-    private fun parseRegisterResponse(jsonString: String): RegisterResponse? {
-        return try {
-            val jsonObject = JSONObject(jsonString)
-            val code = jsonObject.optInt("code", -1)
-            val msg = jsonObject.optString("msg", null.toString())
-
-            val dataObject = jsonObject.optJSONObject("data")
-            val data = dataObject?.let {
-                RegisterResponseData(
-                    accessToken = it.optString("accessToken", null.toString()),
-                    expiresIn = it.optLong("expiresIn", -1),
-                    refreshToken = it.optString("refreshToken", null.toString()),
-                    userId = it.optString("userId", null.toString())
-                )
+    // region 响应处理
+    private fun handleResponse(
+        response: String?,
+        error: Throwable?,
+        callback: (RegisterResponse?, Throwable?) -> Unit
+    ) {
+        when {
+            error != null -> callback(parseLocalData(), null)
+            response != null -> {
+                try {
+                    callback(Gson().fromJson(response, RegisterResponse::class.java), null)
+                } catch (e: Exception) {
+                    callback(parseLocalData(), null)
+                }
             }
-            RegisterResponse(code, msg, data)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            else -> callback(parseLocalData(), null)
         }
     }
+
+    private fun parseLocalData(): RegisterResponse {
+        return Gson().fromJson(localResponse, RegisterResponse::class.java)
+    }
+    // endregion
 }

@@ -2,34 +2,35 @@ package com.atcumt.kxq.utils.network.auth
 
 import com.atcumt.kxq.utils.network.ApiServiceS
 import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_AUTH
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.json.JSONObject
-import java.io.IOException
+import java.lang.Exception
 
-// 定义刷新 Token 请求服务
 class RefreshTokenService {
-
-    // 定义刷新 Token 请求的数据类
+    // region 数据结构
     data class RefreshTokenRequest(
-        val refreshToken: String  // 刷新令牌
+        @SerializedName("refreshToken") val refreshToken: String
     )
 
-    // 定义刷新 Token 响应的数据类
     data class RefreshTokenResponse(
-        val code: Int?,            // 响应码
-        val msg: String?,          // 消息
-        val data: RefreshTokenResponseData? // 数据部分
-    )
+        @SerializedName("code") val code: Int?,
+        @SerializedName("msg") val msg: String?,
+        @SerializedName("data") val data: RefreshTokenData?
+    ) {
+        val isSuccess: Boolean get() = code == 200
+    }
 
-    data class RefreshTokenResponseData(
-        val accessToken: String?,  // 新的访问令牌
-        val expiresIn: Long?,      // 新的有效期
-        val refreshToken: String?, // 新的刷新令牌
-        val userId: String?        // 用户 ID
+    data class RefreshTokenData(
+        @SerializedName("accessToken") val accessToken: String?,
+        @SerializedName("expiresIn") val expiresIn: Long?,
+        @SerializedName("refreshToken") val refreshToken: String?,
+        @SerializedName("userId") val userId: String?
     )
+    // endregion
 
-    // 本地数据
+    // region 本地数据
     private val localResponse = """
         {
             "code": 200,
@@ -42,39 +43,25 @@ class RefreshTokenService {
             }
         }
     """
+    // endregion
 
-    // 刷新 Token 方法
+    // region 网络请求
     fun refreshToken(
-        refreshTokenRequest: RefreshTokenRequest,
+        request: RefreshTokenRequest,
         callback: (RefreshTokenResponse?, Throwable?) -> Unit
     ) {
-        // 设置请求头
-        val headers = mapOf(
-            "Content-Type" to "application/json",
-            "Accept" to "*/*"
-        )
-
-        // 构建请求体
-        val requestBody = mapOf(
-            "refreshToken" to refreshTokenRequest.refreshToken
-        )
-
-        // 调用 ApiServiceS 的 POST 方法
         ApiServiceS.post(
-            BASE_URL_AUTH,
-            "v1/refresh_token",
-            requestBody,
-            headers
+            baseUrl = BASE_URL_AUTH,
+            endpoint = "v1/refresh_token",
+            params = mapOf(
+                "refreshToken" to request.refreshToken
+            ), // 自动序列化对象
+            headers = mapOf(
+                "Content-Type" to "application/json",
+                "Accept" to "*/*"
+            )
         ) { response, error ->
-            if (error != null) {
-                // 网络请求失败时，返回本地数据
-                val localParsedResponse = parseRefreshTokenResponse(localResponse)
-                callback(localParsedResponse, null)
-            } else {
-                // 网络请求成功时，解析响应
-                val parsedResponse = response?.let { parseRefreshTokenResponse(it) }
-                callback(parsedResponse, null)
-            }
+            handleResponse(response, error, callback)
         }
     }
 
@@ -83,37 +70,38 @@ class RefreshTokenService {
         return suspendCancellableCoroutine { cont ->
             refreshToken(request) { response, error ->
                 if (error != null) {
-                    // 网络请求失败时，返回本地数据
-                    val localParsedResponse = parseRefreshTokenResponse(localResponse)
-                    cont.resume(localParsedResponse!!, null)
+                    cont.resumeWith(Result.success(parseLocalData()))
                 } else {
-                    // 网络请求成功时，返回响应
-                    cont.resume(response!!, null)
+                    response?.let { cont.resumeWith(Result.success(it)) }
+                        ?: cont.resumeWith(Result.success(parseLocalData()))
                 }
             }
         }
     }
+    // endregion
 
-    // 解析刷新 Token 响应
-    private fun parseRefreshTokenResponse(jsonString: String): RefreshTokenResponse? {
-        return try {
-            val jsonObject = JSONObject(jsonString)
-            val code = jsonObject.optInt("code", -1)
-            val msg = jsonObject.optString("msg", null.toString())
-
-            val dataObject = jsonObject.optJSONObject("data")
-            val data = dataObject?.let {
-                RefreshTokenResponseData(
-                    accessToken = it.optString("accessToken", null.toString()),
-                    expiresIn = it.optLong("expiresIn", -1),
-                    refreshToken = it.optString("refreshToken", null.toString()),
-                    userId = it.optString("userId", null.toString())
-                )
+    // region 响应处理
+    private fun handleResponse(
+        response: String?,
+        error: Throwable?,
+        callback: (RefreshTokenResponse?, Throwable?) -> Unit
+    ) {
+        when {
+            error != null -> callback(parseLocalData(), null)
+            response != null -> {
+                try {
+                    callback(Gson().fromJson(response, RefreshTokenResponse::class.java), null)
+                } catch (e: Exception) {
+                    callback(parseLocalData(), null)
+                }
             }
-            RefreshTokenResponse(code, msg, data)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+
+            else -> callback(parseLocalData(), null)
         }
     }
+
+    private fun parseLocalData(): RefreshTokenResponse {
+        return Gson().fromJson(localResponse, RefreshTokenResponse::class.java)
+    }
+    // endregion
 }

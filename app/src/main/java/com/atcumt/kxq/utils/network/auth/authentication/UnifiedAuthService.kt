@@ -1,77 +1,102 @@
 package com.atcumt.kxq.utils.network.auth.authentication
 
-import com.atcumt.kxq.utils.network.ApiService
-import okhttp3.FormBody
-import okhttp3.Headers
-import okhttp3.RequestBody
-import org.json.JSONObject
+import com.atcumt.kxq.utils.network.ApiServiceS
+import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_AUTH
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.IOException
 
-// 定义统一身份认证请求服务，继承 ApiService
-class UnifiedAuthService : ApiService() {
-
-    // 定义统一身份认证请求的数据类
+class UnifiedAuthService {
+    // region 数据结构
     data class UnifiedAuthRequest(
-        val cookie: String  // Cookie
+        @SerializedName("Cookie") val cookie: String
     )
 
-    // 定义统一身份认证响应的数据类
     data class UnifiedAuthResponse(
-        val code: Int?,            // 响应码
-        val msg: String?,          // 消息
-        val data: UnifiedAuthResponseData? // 数据部分
-    )
-
-    data class UnifiedAuthResponseData(
-        val type: String?,         // 类型
-        val token: String?,        // 令牌
-        val expiresIn: Long?       // 有效期
-    )
-
-    // 统一身份认证方法
-    fun unifiedAuth(
-        unifiedAuthRequest: UnifiedAuthRequest,
-        callback: (UnifiedAuthResponse?, IOException?) -> Unit
+        @SerializedName("code") val code: Int?,
+        @SerializedName("msg") val msg: String?,
+        @SerializedName("data") val data: UnifiedAuthData?
     ) {
-        // 设置请求头
-        val headers = Headers.Builder()
-            .add("Cookie", unifiedAuthRequest.cookie)  // 添加 Cookie 到请求头
-            .add("Accept", "*/*")
-            .build()
+        val isSuccess: Boolean get() = code == 200
+    }
 
-        // 构建 URL
-        val url = buildUrlWithParams(BASE_URL_AUTH, "v1/authentication/unifiedAuth")
+    data class UnifiedAuthData(
+        @SerializedName("type") val type: String?,
+        @SerializedName("token") val token: String?,
+        @SerializedName("expiresIn") val expiresIn: Long?
+    )
+    // endregion
 
-        // 调用父类的 POST 方法
-        post(url, headers) { response, error ->
-            if (error != null) {
-                callback(null, error)
-            } else {
-                val parsedResponse = response?.let { parseUnifiedAuthResponse(it) }
-                callback(parsedResponse, null)
+    // region 本地数据
+    private val localResponse = """
+        {
+            "code": 200,
+            "msg": "成功",
+            "data": {
+                "type": "unified_auth",
+                "token": "723e5af3de084a86a1fdf8ed771e79a5",
+                "expiresIn": 900
             }
+        }
+    """
+    // endregion
+
+    // region 网络请求
+    fun unifiedAuth(
+        request: UnifiedAuthRequest,
+        callback: (UnifiedAuthResponse?, Throwable?) -> Unit
+    ) {
+        ApiServiceS.post(
+            baseUrl = BASE_URL_AUTH,
+            endpoint = "v1/authentication/unifiedAuth",
+            params = mapOf(), // 无请求体
+            headers = mapOf(
+                "Cookie" to request.cookie,
+                "Accept" to "*/*"
+            )
+        ) { response, error ->
+            handleResponse(response, error, callback)
         }
     }
 
-    // 解析统一身份认证响应
-    private fun parseUnifiedAuthResponse(jsonString: String): UnifiedAuthResponse? {
-        return try {
-            val jsonObject = JSONObject(jsonString)
-            val code = jsonObject.optInt("code", -1)
-            val msg = jsonObject.optString("msg", null.toString())
-
-            val dataObject = jsonObject.optJSONObject("data")
-            val data = dataObject?.let {
-                UnifiedAuthResponseData(
-                    type = it.optString("type", null.toString()),
-                    token = it.optString("token", null.toString()),
-                    expiresIn = it.optLong("expiresIn", -1)
-                )
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun unifiedAuthBlocking(request: UnifiedAuthRequest): UnifiedAuthResponse {
+        return suspendCancellableCoroutine { cont ->
+            unifiedAuth(request) { response, error ->
+                if (error != null) {
+                    cont.resumeWith(Result.success(parseLocalData()))
+                } else {
+                    response?.let { cont.resumeWith(Result.success(it)) }
+                        ?: cont.resumeWith(Result.success(parseLocalData()))
+                }
             }
-            UnifiedAuthResponse(code, msg, data)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
         }
     }
+    // endregion
+
+    // region 响应处理
+    private fun handleResponse(
+        response: String?,
+        error: Throwable?,
+        callback: (UnifiedAuthResponse?, Throwable?) -> Unit
+    ) {
+        when {
+            error != null -> callback(parseLocalData(), null)
+            response != null -> {
+                try {
+                    callback(Gson().fromJson(response, UnifiedAuthResponse::class.java), null)
+                } catch (e: Exception) {
+                    callback(parseLocalData(), null)
+                }
+            }
+            else -> callback(parseLocalData(), null)
+        }
+    }
+
+    private fun parseLocalData(): UnifiedAuthResponse {
+        return Gson().fromJson(localResponse, UnifiedAuthResponse::class.java)
+    }
+    // endregion
 }

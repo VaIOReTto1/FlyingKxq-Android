@@ -6,6 +6,8 @@ import com.atcumt.kxq.page.login.dao.UserDao
 import com.atcumt.kxq.page.login.dao.UserEntity
 import com.atcumt.kxq.utils.network.ApiServiceS
 import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_USER
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,44 +15,44 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.IOException
 
 class UserInfoService(private val userDao: UserDao) {
-
-    // 响应数据结构
+    // region 数据结构
     data class UserInfoResponse(
-        val code: Int,
-        val msg: String,
-        val data: UserInfoData?
-    )
+        @SerializedName("code") val code: Int,
+        @SerializedName("msg") val msg: String,
+        @SerializedName("data") val data: UserInfoData?
+    ) {
+        val isSuccess: Boolean get() = code == 200
+    }
 
     data class UserInfoData(
-        val userId: String,
-        val username: String,
-        val nickname: String?,
-        val avatar: String?,
-        val bio: String?,
-        val gender: Int?,
-        val hometown: String?,
-        val major: String?,
-        val grade: Int?,
-        val statuses: List<StatusData?>?,
-        val level: Int?,
-        val experience: Int?,
-        val followersCount: Int?,
-        val followingsCount: Int?,
-        val likeReceivedCount: Int?
+        @SerializedName("userId") val userId: String,
+        @SerializedName("username") val username: String,
+        @SerializedName("nickname") val nickname: String?,
+        @SerializedName("avatar") val avatar: String?,
+        @SerializedName("bio") val bio: String?,
+        @SerializedName("gender") val gender: Int?,
+        @SerializedName("hometown") val hometown: String?,
+        @SerializedName("major") val major: String?,
+        @SerializedName("grade") val grade: Int?,
+        @SerializedName("statuses") val statuses: List<StatusData>?,
+        @SerializedName("level") val level: Int?,
+        @SerializedName("experience") val experience: Int?,
+        @SerializedName("followersCount") val followersCount: Int?,
+        @SerializedName("followingsCount") val followingsCount: Int?,
+        @SerializedName("likeReceivedCount") val likeReceivedCount: Int?
     )
 
     data class StatusData(
-        val emoji: String?,
-        val text: String?,
-        val endTime: String?
+        @SerializedName("emoji") val emoji: String?,
+        @SerializedName("text") val text: String?,
+        @SerializedName("endTime") val endTime: String?
     )
+    // endregion
 
-    // 本地数据
+    // region 本地数据
     private val localResponse = """
         {
             "code": 200,
@@ -74,30 +76,21 @@ class UserInfoService(private val userDao: UserDao) {
             }
         }
     """
+    // endregion
 
-    // 获取用户信息
+    // region 网络请求
     @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
     suspend fun getUserInfoBlocking(token: String): UserInfoResponse? = withContext(Dispatchers.IO) {
         suspendCancellableCoroutine { continuation ->
-            val headers = mapOf(
-                "Accept" to "application/json",
-                "Authorization" to "Bearer $token"
-            )
-
-            // 调用 ApiServiceS 的 GET 方法
             ApiServiceS.get(
-                BASE_URL_USER,
-                "info/v1/me",
-                headers = headers
+                baseUrl = BASE_URL_USER,
+                endpoint = "info/v1/me",
+                headers = mapOf(
+                    "Accept" to "application/json",
+                    "Authorization" to "Bearer $token"
+                )
             ) { response, error ->
-                if (error != null) {
-                    // 网络请求失败时，返回本地数据
-                    val localParsedResponse = parseUserInfoResponse(localResponse)
-                    continuation.resume(localParsedResponse, null)
-                } else {
-                    // 网络请求成功时，解析响应
-                    val parsedResponse = response?.let { parseUserInfoResponse(it) }
-                    // 直接在协程中调用 saveToLocal
+                handleResponse(response, error) { parsedResponse ->
                     GlobalScope.launch(Dispatchers.IO) {
                         parsedResponse?.data?.let { saveToLocal(it) }
                         continuation.resume(parsedResponse, null)
@@ -106,49 +99,41 @@ class UserInfoService(private val userDao: UserDao) {
             }
         }
     }
+    // endregion
 
-    // 解析响应
-    private fun parseUserInfoResponse(jsonString: String): UserInfoResponse {
-        val json = JSONObject(jsonString)
-        return UserInfoResponse(
-            code = json.getInt("code"),
-            msg = json.getString("msg"),
-            data = json.optJSONObject("data")?.let { dataJson ->
-                UserInfoData(
-                    userId = dataJson.optString("userId"),
-                    username = dataJson.optString("username"),
-                    nickname = dataJson.optString("nickname"),
-                    avatar = dataJson.optString("avatar"),
-                    bio = dataJson.optString("bio"),
-                    gender = dataJson.optInt("gender"),
-                    hometown = dataJson.optString("hometown"),
-                    major = dataJson.optString("major"),
-                    grade = dataJson.optInt("grade"),
-                    statuses = dataJson.optJSONArray("statuses")?.let { parseStatuses(it) },
-                    level = dataJson.optInt("level"),
-                    experience = dataJson.optInt("experience"),
-                    followersCount = dataJson.optInt("followersCount"),
-                    followingsCount = dataJson.optInt("followingsCount"),
-                    likeReceivedCount = dataJson.optInt("likeReceivedCount")
-                )
+    // region 响应处理
+    private fun handleResponse(
+        response: String?,
+        error: Throwable?,
+        callback: (UserInfoResponse?) -> Unit
+    ) {
+        when {
+            error != null -> {
+                Log.w("UserInfoService", "网络请求失败，使用本地数据")
+                callback(parseLocalData())
             }
-        )
-    }
-
-    private fun parseStatuses(array: JSONArray): List<StatusData> {
-        return List(array.length()) { i ->
-            val item = array.optJSONObject(i)
-            StatusData(
-                emoji = item.optString("emoji"),
-                text = item.optString("text"),
-                endTime = item.optString("endTime")
-            )
+            response != null -> {
+                try {
+                    callback(Gson().fromJson(response, UserInfoResponse::class.java))
+                } catch (e: Exception) {
+                    Log.e("UserInfoService", "JSON 解析失败", e)
+                    callback(parseLocalData())
+                }
+            }
+            else -> {
+                Log.w("UserInfoService", "收到空响应，使用本地数据")
+                callback(parseLocalData())
+            }
         }
     }
 
-    // 保存用户信息到本地数据库
+    private fun parseLocalData(): UserInfoResponse {
+        return Gson().fromJson(localResponse, UserInfoResponse::class.java)
+    }
+    // endregion
+
+    // region 数据库操作（保持不变）
     private suspend fun saveToLocal(data: UserInfoData) = withContext(Dispatchers.IO) {
-        // 转换为主实体
         val userEntity = UserEntity(
             userId = data.userId,
             username = data.username,
@@ -166,28 +151,22 @@ class UserInfoService(private val userDao: UserDao) {
             likeReceivedCount = data.likeReceivedCount
         )
 
-        // 转换状态数据
-        val statusEntities = data.statuses?.mapNotNull { status ->
-            status?.let {
+        val statusEntities = data.statuses?.map {
+            it.let { status ->
                 StatusEntity(
                     userId = data.userId,
-                    emoji = it.emoji,
-                    text = it.text,
-                    endTime = it.endTime
+                    emoji = status.emoji,
+                    text = status.text,
+                    endTime = status.endTime
                 )
             }
         }
 
-        // 事务操作
         userDao.runInTransaction {
-            // 更新用户信息
             userDao.upsertUser(userEntity)
-
-            // 更新状态信息（先删除旧数据）
             userDao.deleteStatusByUser(data.userId)
-
-            // 插入新状态
             statusEntities?.let { userDao.insertStatuses(it) }
         }
     }
+    // endregion
 }

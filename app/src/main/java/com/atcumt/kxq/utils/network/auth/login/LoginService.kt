@@ -2,34 +2,40 @@ package com.atcumt.kxq.utils.network.auth.login
 
 import com.atcumt.kxq.utils.network.ApiServiceS
 import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_AUTH
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
+import java.lang.Exception
 
-// 定义登录请求服务，继承 ApiService
 class LoginService {
-
-    // 定义登录请求的数据类
+    // region 数据结构
+    // 登录请求数据类
     data class LoginRequest(
-        val deviceType: String,  // 设备类型
-        val username: String,    // 用户名
-        val password: String     // 密码
+        @SerializedName("deviceType") val deviceType: String,
+        @SerializedName("username") val username: String,
+        @SerializedName("password") val password: String
     )
 
-    // 定义登录响应的数据类
+    // 登录响应数据结构
     data class LoginAPIResponse(
-        val code: Int?,         // 响应码
-        val msg: String?,       // 消息
-        val data: LoginResponseData? // 数据部分
-    )
+        @SerializedName("code") val code: Int?,
+        @SerializedName("msg") val msg: String?,
+        @SerializedName("data") val data: LoginResponseData?
+    ) {
+        val isSuccess: Boolean get() = code == 200
+    }
 
     data class LoginResponseData(
-        val accessToken: String?,    // 访问令牌
-        val expiresIn: Long?,        // 有效期
-        val refreshToken: String?,   // 刷新令牌
-        val userId: String?          // 用户ID
+        @SerializedName("accessToken") val accessToken: String?,
+        @SerializedName("expiresIn") val expiresIn: Long?,
+        @SerializedName("refreshToken") val refreshToken: String?,
+        @SerializedName("userId") val userId: String?
     )
+    // endregion
 
+    // region 本地数据
     private val localResponse = """
     {
         "code": 200,
@@ -42,39 +48,30 @@ class LoginService {
         }
     }
     """
+    // endregion
 
-    // 登录方法
+    // region 网络请求
     fun login(
-        loginRequest: LoginRequest,
+        request: LoginRequest,
         callback: (LoginAPIResponse?, Throwable?) -> Unit
     ) {
-        // 设置请求头
-        val headers = mapOf(
-            "Device-Type" to loginRequest.deviceType,
-            "Content-Type" to "application/json",
-            "Accept" to "*/*"
-        )
-
         // 构建 JSON 请求体
         val requestBody = mapOf(
-            "username" to loginRequest.username,
-            "password" to loginRequest.password
+            "username" to request.username,
+            "password" to request.password
         )
 
-        // 调用父类的 POST 方法
         ApiServiceS.post(
-            BASE_URL_AUTH,
-            "v1/login/username",
-            requestBody,
-            headers
+            baseUrl = BASE_URL_AUTH,
+            endpoint = "v1/login/username",
+            params = requestBody, // 直接传递数据对象
+            headers = mapOf(
+                "Device-Type" to request.deviceType,
+                "Content-Type" to "application/json",
+                "Accept" to "*/*"
+            )
         ) { response, error ->
-            if (error != null) {
-                val localParsedResponse = parseLoginResponse(localResponse)
-                callback(localParsedResponse, null)
-            } else {
-                val parsedResponse = response?.let { parseLoginResponse(it) }
-                callback(parsedResponse, null)
-            }
+            handleResponse(response, error, callback)
         }
     }
 
@@ -83,36 +80,41 @@ class LoginService {
         return suspendCancellableCoroutine { cont ->
             login(request) { response, error ->
                 if (error != null) {
-                    // 网络请求失败时，返回本地数据
-                    val localParsedResponse = parseLoginResponse(localResponse)
-                    cont.resume(localParsedResponse!!, null)
+                    cont.resumeWith(Result.success(parseLocalData()))
                 } else {
-                    cont.resume(response!!, null)
+                    response?.let { cont.resumeWith(Result.success(it)) }
+                        ?: cont.resumeWith(Result.success(parseLocalData()))
                 }
             }
         }
     }
+    // endregion
 
-    // 解析登录响应
-    private fun parseLoginResponse(jsonString: String): LoginAPIResponse? {
-        return try {
-            val jsonObject = JSONObject(jsonString)
-            val code = jsonObject.optInt("code", -1)
-            val msg = jsonObject.optString("msg", null.toString())
-
-            val dataObject = jsonObject.optJSONObject("data")
-            val data = dataObject?.let {
-                LoginResponseData(
-                    accessToken = it.optString("accessToken", null.toString()),
-                    expiresIn = it.optLong("expiresIn", -1),
-                    refreshToken = it.optString("refreshToken", null.toString()),
-                    userId = it.optString("userId", null.toString())
-                )
+    // region 响应处理
+    private fun handleResponse(
+        response: String?,
+        error: Throwable?,
+        callback: (LoginAPIResponse?, Throwable?) -> Unit
+    ) {
+        when {
+            error != null -> {
+                callback(parseLocalData(), null) // 网络错误时返回本地数据
             }
-            LoginAPIResponse(code, msg, data)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            response != null -> {
+                try {
+                    callback(Gson().fromJson(response, LoginAPIResponse::class.java), null)
+                } catch (e: Exception) {
+                    callback(parseLocalData(), null) // JSON 解析错误时返回本地数据
+                }
+            }
+            else -> {
+                callback(parseLocalData(), null) // 空响应时返回本地数据
+            }
         }
     }
+
+    private fun parseLocalData(): LoginAPIResponse {
+        return Gson().fromJson(localResponse, LoginAPIResponse::class.java)
+    }
+    // endregion
 }
