@@ -1,19 +1,13 @@
 package com.atcumt.kxq.utils.network.auth
 
-import android.util.Log
-import com.atcumt.kxq.utils.network.ApiService
+import com.atcumt.kxq.utils.network.ApiServiceS
+import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_AUTH
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import okhttp3.FormBody
-import okhttp3.Headers
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import java.io.IOException
 
-// 定义注册请求服务，继承 ApiService
-class RegisterService : ApiService() {
+// 定义注册请求服务
+class RegisterService {
 
     // 定义注册请求的数据类
     data class RegisterRequest(
@@ -21,7 +15,7 @@ class RegisterService : ApiService() {
         val unifiedAuthToken: String,         // 统一认证令牌
         val username: String,                 // 用户名
         val password: String,                 // 密码
-        val qqAuthorizationCode: String?,     // QQ 授权码，可选
+        val qqAuthorizationCode: String?      // QQ 授权码，可选
     )
 
     // 定义注册响应的数据类
@@ -38,58 +32,88 @@ class RegisterService : ApiService() {
         val userId: String?        // 用户 ID
     )
 
+    // 本地数据
+    private val localResponse = """
+        {
+            "code": 200,
+            "msg": "成功",
+            "data": {
+                "accessToken": "zwqGZ3oD1oynglqJOxIJOyxljB5h32PQ7bI8rth5cwMEAmhbWPONxP8p75W3zZaA",
+                "expiresIn": 2592000,
+                "refreshToken": "VCzpo9jNRnXVEhV8gyIko2TAn9qEnGfxAX7yJ8lFsR6gtv1x9oMQEpaQo6rnio5WVuawqPhflMJss0jVhW12OvdPOUEZCrux3gxyCNKn4nBigXUsbCpO38HuDR2o22nr",
+                "userId": "5a50eae4a24c4ebfbdf16b7c537b81aa"
+            }
+        }
+    """
+
+    // 注册方法
+    fun register(
+        registerRequest: RegisterRequest,
+        callback: (RegisterResponse?, Throwable?) -> Unit
+    ) {
+        // 设置请求头
+        val headers = mapOf(
+            "Device-Type" to registerRequest.deviceType,
+            "Content-Type" to "application/json",
+            "Accept" to "*/*"
+        )
+
+        // 构建请求体
+//        val requestBody = buildString {
+//            append("{")
+//            append("\"unifiedAuthToken\": \"${registerRequest.unifiedAuthToken}\",")
+//            append("\"username\": \"${registerRequest.username}\",")
+//            append("\"password\": \"${registerRequest.password}\"")
+//
+//            // 只在字段不为空时添加
+//            registerRequest.qqAuthorizationCode?.let {
+//                append(", \"qqAuthorizationCode\": \"$it\"")
+//            }
+//
+//            append("}")
+//        }
+
+        val requestBody = mutableMapOf<String, String>().apply {
+            put("unifiedAuthToken", registerRequest.unifiedAuthToken)
+            put("username", registerRequest.username)
+            put("password", registerRequest.password)
+            // 只在字段不为空时添加
+            registerRequest.qqAuthorizationCode?.let {
+                put("qqAuthorizationCode", it)
+            }
+        }
+
+        // 调用 ApiServiceS 的 POST 方法
+        ApiServiceS.post(
+            BASE_URL_AUTH,
+            "v1/register",
+            requestBody,
+            headers
+        ) { response, error ->
+            if (error != null) {
+                // 网络请求失败时，返回本地数据
+                val localParsedResponse = parseRegisterResponse(localResponse)
+                callback(localParsedResponse, null)
+            } else {
+                // 网络请求成功时，解析响应
+                val parsedResponse = response?.let { parseRegisterResponse(it) }
+                callback(parsedResponse, null)
+            }
+        }
+    }
+
     @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun registerBlocking(request: RegisterRequest): RegisterResponse {
         return suspendCancellableCoroutine { cont ->
             register(request) { response, error ->
                 if (error != null) {
-                    cont.resumeWith(Result.failure(error))
+                    // 网络请求失败时，返回本地数据
+                    val localParsedResponse = parseRegisterResponse(localResponse)
+                    cont.resume(localParsedResponse!!, null)
                 } else {
+                    // 网络请求成功时，返回响应
                     cont.resume(response!!, null)
                 }
-            }
-        }
-    }
-
-    // 注册方法
-    fun register(
-        registerRequest: RegisterRequest,
-        callback: (RegisterResponse?, IOException?) -> Unit
-    ) {
-        // 设置请求头
-        val headers = Headers.Builder()
-            .add("Device-Type", registerRequest.deviceType)
-            .add("Content-Type", "application/x-www-form-urlencoded")
-            .add("Accept", "*/*")
-            .build()
-
-        val jsonRequest = buildString {
-            append("{")
-            append("\"unifiedAuthToken\": \"${registerRequest.unifiedAuthToken}\",")
-            append("\"username\": \"${registerRequest.username}\",")
-            append("\"password\": \"${registerRequest.password}\"")
-
-            // 只在字段不为空时添加
-            registerRequest.qqAuthorizationCode?.let {
-                append(", \"qqAuthorizationCode\": \"$it\"")
-            }
-
-            append("}")
-        }
-
-        // 创建 JSON 请求体
-        val requestBody: RequestBody =
-            jsonRequest.toRequestBody("application/json".toMediaTypeOrNull())
-
-        val url = buildUrlWithParams(BASE_URL_AUTH, "v1/register")
-
-        // 调用父类的 POST 方法
-        post(url, headers, requestBody) { response, error ->
-            if (error != null) {
-                callback(null, error)
-            } else {
-                val parsedResponse = response?.let { parseRegisterResponse(it) }
-                callback(parsedResponse, null)
             }
         }
     }

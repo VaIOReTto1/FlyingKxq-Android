@@ -115,7 +115,7 @@ fun BackButton(navController: NavController) {
             .size(19.wdp, 48.wdp)
             .clickable(
                 indication = null,
-                interactionSource = MutableInteractionSource()
+                interactionSource = remember { MutableInteractionSource() }
             ) { navController.popBackStack() }, // 点击返回上一页
         colorFilter = ColorFilter.tint(FlyColors.FlyText)
     )

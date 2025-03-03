@@ -1,22 +1,23 @@
 package com.atcumt.kxq.utils.network.user.info.me
 
-import android.content.Context
 import android.util.Log
-import com.atcumt.kxq.utils.network.ApiService
-import com.atcumt.kxq.utils.network.auth.login.LoginService
+import com.atcumt.kxq.page.login.dao.StatusEntity
+import com.atcumt.kxq.page.login.dao.UserDao
+import com.atcumt.kxq.page.login.dao.UserEntity
+import com.atcumt.kxq.utils.network.ApiServiceS
+import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_USER
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import okhttp3.Headers
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 
-class UserInfoService : ApiService() {
-
-    // 本地存储工具类
-//    private val sharedPreferences = context.getSharedPreferences("user_info", Context.MODE_PRIVATE)
+class UserInfoService(private val userDao: UserDao) {
 
     // 响应数据结构
     data class UserInfoResponse(
@@ -49,38 +50,58 @@ class UserInfoService : ApiService() {
         val endTime: String?
     )
 
-    // 获取用户信息
-    fun getUserInfo(
-        token: String,
-        callback: (UserInfoResponse?, IOException?) -> Unit
-    ) {
-        val headers = Headers.Builder()
-            .add("Accept", "application/json")
-            .add("Authorization", "Bearer $token")
-            .build()
-
-        val url = buildUrlWithParams(BASE_URL_USER, "info/v1/me")
-
-        get(url, headers) { response, error ->
-            Log.d("NetworkLog", "getUserInfo: $response")
-            if (error != null) {
-                callback(null, error)
-            } else {
-                val parsedResponse = response?.let { parseUserInfoResponse(it) }
-                parsedResponse?.data?.let { saveToLocal(it) }
-                callback(parsedResponse, null)
+    // 本地数据
+    private val localResponse = """
+        {
+            "code": 200,
+            "msg": "成功",
+            "data": {
+                "userId": "7bc19f9be50a437f9d9d45193d065b38",
+                "username": "qqqqqq",
+                "nickname": "圈圈FUknaN",
+                "avatar": "http://119.45.93.228:8080/api/file/v1/public/e59b8e263ee1764656e34ef38322f234a67ae9417d66c70652f90311db9271b3.jpg",
+                "bio": "",
+                "gender": 1,
+                "hometown": "",
+                "major": null,
+                "grade": null,
+                "statuses": null,
+                "level": 5,
+                "experience": 0,
+                "followersCount": 2,
+                "followingsCount": 0,
+                "likeReceivedCount": 0
             }
         }
-    }
+    """
 
-    // 修改 UserInfoService 的 getUserInfoBlocking 方法
-    suspend fun getUserInfoBlocking(token:String): UserInfoResponse = withContext(Dispatchers.IO) {
-        return@withContext suspendCancellableCoroutine { continuation ->
-            getUserInfo(token) { response, error ->
-                when {
-                    error != null -> continuation.resumeWith(Result.failure(error))
-                    response != null -> continuation.resumeWith(Result.success(response))
-                    else -> continuation.resumeWith(Result.failure(IOException("Unknown error")))
+    // 获取用户信息
+    @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+    suspend fun getUserInfoBlocking(token: String): UserInfoResponse? = withContext(Dispatchers.IO) {
+        suspendCancellableCoroutine { continuation ->
+            val headers = mapOf(
+                "Accept" to "application/json",
+                "Authorization" to "Bearer $token"
+            )
+
+            // 调用 ApiServiceS 的 GET 方法
+            ApiServiceS.get(
+                BASE_URL_USER,
+                "info/v1/me",
+                headers = headers
+            ) { response, error ->
+                if (error != null) {
+                    // 网络请求失败时，返回本地数据
+                    val localParsedResponse = parseUserInfoResponse(localResponse)
+                    continuation.resume(localParsedResponse, null)
+                } else {
+                    // 网络请求成功时，解析响应
+                    val parsedResponse = response?.let { parseUserInfoResponse(it) }
+                    // 直接在协程中调用 saveToLocal
+                    GlobalScope.launch(Dispatchers.IO) {
+                        parsedResponse?.data?.let { saveToLocal(it) }
+                        continuation.resume(parsedResponse, null)
+                    }
                 }
             }
         }
@@ -125,33 +146,48 @@ class UserInfoService : ApiService() {
         }
     }
 
-    // 本地存储
-    private fun saveToLocal(data: UserInfoData) {
-//        sharedPreferences.edit().apply {
-//            putString("userId", data.userId)
-//            putString("username", data.username)
-//            putString("nickname", data.nickname)
-//            putString("avatar", data.avatar)
-//            putString("bio", data.bio)
-//            putInt("gender", data.gender)
-//            putString("hometown", data.hometown)
-//            putString("major", data.major)
-//            putInt("grade", data.grade)
-//            putString("statuses", JSONArray(data.statuses.map { it.toJson() }).toString())
-//            putInt("level", data.level)
-//            putInt("experience", data.experience)
-//            putInt("followersCount", data.followersCount)
-//            putInt("followingsCount", data.followingsCount)
-//            putInt("likeReceivedCount", data.likeReceivedCount)
-//        }.apply()
-    }
+    // 保存用户信息到本地数据库
+    private suspend fun saveToLocal(data: UserInfoData) = withContext(Dispatchers.IO) {
+        // 转换为主实体
+        val userEntity = UserEntity(
+            userId = data.userId,
+            username = data.username,
+            nickname = data.nickname,
+            avatar = data.avatar,
+            bio = data.bio,
+            gender = data.gender,
+            hometown = data.hometown,
+            major = data.major,
+            grade = data.grade,
+            level = data.level,
+            experience = data.experience,
+            followersCount = data.followersCount,
+            followingsCount = data.followingsCount,
+            likeReceivedCount = data.likeReceivedCount
+        )
 
-    // 状态数据转JSON
-    private fun StatusData.toJson(): JSONObject {
-        return JSONObject().apply {
-            put("emoji", emoji)
-            put("text", text)
-            put("endTime", endTime)
+        // 转换状态数据
+        val statusEntities = data.statuses?.mapNotNull { status ->
+            status?.let {
+                StatusEntity(
+                    userId = data.userId,
+                    emoji = it.emoji,
+                    text = it.text,
+                    endTime = it.endTime
+                )
+            }
+        }
+
+        // 事务操作
+        userDao.runInTransaction {
+            // 更新用户信息
+            userDao.upsertUser(userEntity)
+
+            // 更新状态信息（先删除旧数据）
+            userDao.deleteStatusByUser(data.userId)
+
+            // 插入新状态
+            statusEntities?.let { userDao.insertStatuses(it) }
         }
     }
 }

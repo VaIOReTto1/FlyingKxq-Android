@@ -1,9 +1,12 @@
 package com.atcumt.kxq.page.login.ViewModel
 
+import android.app.Application
+import android.content.Context
 import android.os.Build
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.atcumt.kxq.utils.AppDatabase
 import com.atcumt.kxq.utils.network.auth.login.LoginService
 import com.atcumt.kxq.utils.network.user.info.me.UserInfoService
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +37,7 @@ sealed class Event {
 
 // 表示用户交互意图
 sealed class LoginIntent {
-    data class Login(val username: String, val password: String) : LoginIntent()
+    data class Login(val username: String, val password: String, val context: Context) : LoginIntent()
     data object NavigateToRegister : LoginIntent()
 }
 
@@ -64,14 +67,14 @@ class LoginViewModel : ViewModel() {
         viewModelScope.launch {
             intentChannel.consumeAsFlow().collect { intent ->
                 when (intent) {
-                    is LoginIntent.Login -> handleLogin(intent.username, intent.password)
+                    is LoginIntent.Login -> handleLogin(intent.username, intent.password,intent.context)
                     is LoginIntent.NavigateToRegister -> navigateToRegister()
                 }
             }
         }
     }
 
-    private fun handleLogin(username: String, password: String) {
+    private fun handleLogin(username: String, password: String,context: Context) {
         viewModelScope.launch {
             _state.value = LoginState.Loading
             try {
@@ -91,7 +94,9 @@ class LoginViewModel : ViewModel() {
                     launch(Dispatchers.IO) {
                         try {
                             loginResponse.data?.accessToken?.let {
-                                UserInfoService().getUserInfoBlocking(
+                                UserInfoService(
+                                    AppDatabase.getDatabase(context).userDao()
+                                ).getUserInfoBlocking(
                                     it
                                 )
                             }

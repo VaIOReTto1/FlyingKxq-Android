@@ -1,13 +1,14 @@
 package com.atcumt.kxq.utils.network.auth
 
-import com.atcumt.kxq.utils.network.ApiService
-import okhttp3.FormBody
-import okhttp3.Headers
+import com.atcumt.kxq.utils.network.ApiServiceS
+import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_AUTH
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.json.JSONObject
 import java.io.IOException
 
-// 定义刷新 Token 请求服务，继承 ApiService
-class RefreshTokenService : ApiService() {
+// 定义刷新 Token 请求服务
+class RefreshTokenService {
 
     // 定义刷新 Token 请求的数据类
     data class RefreshTokenRequest(
@@ -28,30 +29,67 @@ class RefreshTokenService : ApiService() {
         val userId: String?        // 用户 ID
     )
 
+    // 本地数据
+    private val localResponse = """
+        {
+            "code": 200,
+            "msg": "成功",
+            "data": {
+                "accessToken": "IszKGVnxUpqvQiovNWt2llk1FzQmeJuSueaquzmP9axyUMMQkFZetTRfvpauJJ5r",
+                "expiresIn": 2592000,
+                "refreshToken": "paNGHEdxo3BZqR6V3is9r82PyOhFqtjQLWKNrkTqFA2JISSe3KDqU9Ac44qI7NJfoyBgoWPP5r2JCBY6uv5HVKzq3XLKsGpoUNxYPJQcOlFaDT9gR8b6mG5RlUZBHlHr",
+                "userId": "5a50eae4a24c4ebfbdf16b7c537b81aa"
+            }
+        }
+    """
+
     // 刷新 Token 方法
     fun refreshToken(
         refreshTokenRequest: RefreshTokenRequest,
-        callback: (RefreshTokenResponse?, IOException?) -> Unit
+        callback: (RefreshTokenResponse?, Throwable?) -> Unit
     ) {
         // 设置请求头
-        val headers = Headers.Builder()
-            .add("Content-Type", "application/json")
-            .add("Accept", "*/*")
-            .build()
+        val headers = mapOf(
+            "Content-Type" to "application/json",
+            "Accept" to "*/*"
+        )
 
         // 构建请求体
-        val formBody = FormBody.Builder()
-            .add("refreshToken", refreshTokenRequest.refreshToken)
-            .build()
+        val requestBody = mapOf(
+            "refreshToken" to refreshTokenRequest.refreshToken
+        )
 
-        val url = buildUrlWithParams(BASE_URL_AUTH, "refresh_token")
-        // 调用父类的 POST 方法
-        post(url, headers, formBody) { response, error ->
+        // 调用 ApiServiceS 的 POST 方法
+        ApiServiceS.post(
+            BASE_URL_AUTH,
+            "v1/refresh_token",
+            requestBody,
+            headers
+        ) { response, error ->
             if (error != null) {
-                callback(null, error)
+                // 网络请求失败时，返回本地数据
+                val localParsedResponse = parseRefreshTokenResponse(localResponse)
+                callback(localParsedResponse, null)
             } else {
+                // 网络请求成功时，解析响应
                 val parsedResponse = response?.let { parseRefreshTokenResponse(it) }
                 callback(parsedResponse, null)
+            }
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun refreshTokenBlocking(request: RefreshTokenRequest): RefreshTokenResponse {
+        return suspendCancellableCoroutine { cont ->
+            refreshToken(request) { response, error ->
+                if (error != null) {
+                    // 网络请求失败时，返回本地数据
+                    val localParsedResponse = parseRefreshTokenResponse(localResponse)
+                    cont.resume(localParsedResponse!!, null)
+                } else {
+                    // 网络请求成功时，返回响应
+                    cont.resume(response!!, null)
+                }
             }
         }
     }

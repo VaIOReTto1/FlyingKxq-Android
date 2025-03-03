@@ -36,6 +36,7 @@ import com.atcumt.kxq.page.login.ViewModel.Event
 import com.atcumt.kxq.page.login.ViewModel.LoginIntent
 import com.atcumt.kxq.page.login.ViewModel.LoginViewModel
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
+import com.atcumt.kxq.utils.AppDatabase
 import com.atcumt.kxq.utils.wdp
 
 @Composable
@@ -97,6 +98,7 @@ fun LoginForm(
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
 
     // 登录表单部分
     Column(
@@ -137,7 +139,8 @@ fun LoginForm(
                 viewModel.intentChannel.trySend(
                     LoginIntent.Login(
                         username,
-                        password
+                        password,
+                        context
                     )
                 )
             }
