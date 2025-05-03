@@ -1,4 +1,4 @@
-package com.atcumt.kxq.page.home
+package com.atcumt.kxq.page.news
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,17 +9,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.atcumt.kxq.page.component.FlyingTab
+import com.atcumt.kxq.page.profile.ProfilePage
 import com.atcumt.kxq.ui.theme.KxqTheme
 import com.atcumt.kxq.utils.AdaptiveScreen
-import com.atcumt.kxq.page.profile.ProfilePage
-
 
 @Composable
-fun HomePage() {
+fun NewsPage() {
     Column {
         // Tab 布局
         FlyingTab(
-            list = listOf("关注", "广场", "热搜"),
+            list = listOf("推荐", "校园", "学院"),
             content = {
                 ProfilePage()
             }
@@ -32,7 +31,7 @@ fun HomePage() {
  */
 @Preview
 @Composable
-fun PreviewRegisterPage() {
+fun PreviewNewsPage() {
     KxqTheme {
         Surface(
             modifier = Modifier.fillMaxSize(),
@@ -40,7 +39,7 @@ fun PreviewRegisterPage() {
         ) {
             AdaptiveScreen {
                 Box(modifier = Modifier.fillMaxSize()) {
-                    HomePage()
+                    NewsPage()
                 }
             }
         }

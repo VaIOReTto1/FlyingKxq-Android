@@ -102,5 +102,4 @@ class UnifiedAuthService {
     private fun parseLocalData(): UnifiedAuthResponse {
         return Gson().fromJson(localResponse, UnifiedAuthResponse::class.java)
     }
-    // endregion
 }

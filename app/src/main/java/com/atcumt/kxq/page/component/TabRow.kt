@@ -2,12 +2,19 @@ package com.atcumt.kxq.page.component
 
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabPosition
@@ -15,6 +22,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -24,10 +32,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.lerp
+import com.atcumt.kxq.page.login.utils.FlyLoginTextField
 import com.atcumt.kxq.utils.ssp
 import com.atcumt.kxq.utils.wdp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+
+/**
+ * 主页面的 Tab
+ * @param list Tab 的标题列表
+ * @param content 页面内容
+ */
+@Composable
+fun FlyingTab(
+    list: List<String>, // Tab 的标题列表
+    content: @Composable () -> Unit,
+) {
+    val pagerState =
+        rememberPagerState(initialPage = 0, pageCount = { list.size }) // Pager 状态
+
+    Column {
+        // Tab 布局
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 9.wdp, vertical = 2.wdp)
+        ) {
+            FlyTabRow(list, pagerState, 159.wdp, 25.wdp)
+            FlyLoginTextField(
+                value = "搜索",
+                modifier = Modifier.height(30.wdp).width(116.wdp),
+                round = 15.wdp
+            )
+        }
+
+        // 页面内容
+        HorizontalPager(
+            state = pagerState,
+        ) { page ->
+            Column(
+                modifier = Modifier.fillMaxSize().background(Color.White),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                content()
+            }
+        }
+    }
+}
 
 @Composable
 fun FlyTabRow(

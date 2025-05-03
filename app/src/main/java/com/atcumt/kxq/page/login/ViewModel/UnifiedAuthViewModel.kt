@@ -1,5 +1,6 @@
 package com.atcumt.kxq.page.login.ViewModel
 
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -7,9 +8,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.atcumt.kxq.utils.network.auth.authentication.UnifiedAuthService
+import com.atcumt.kxq.utils.network.auth.login.LoginService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 
 
 // 统一认证状态

@@ -149,7 +149,7 @@ fun ProfileHeaders() {
                             placeholder(R.drawable.ic_launcher_foreground)
                             error(R.drawable.ic_launcher_foreground)
                             // 关键优化：缩小图片尺寸到实际显示大小
-                            size(13) // 单位：像素（根据实际需求调整）
+//                            size(13) // 单位：像素（根据实际需求调整）
                             // 可选：启用内存缓存
                             memoryCacheKey(
                                 MemoryCache.Key("https://qlogo2.store.qq.com/qzone/1004275481/1004275481/100")

@@ -24,7 +24,7 @@ fun NavigationSetup() {
     }
     NavHost(
         navController = navController,
-        startDestination = "login"
+        startDestination = "main"
     ) {
         composable("login") {
             LoginPage(navController = navController)

@@ -5,21 +5,15 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.ResponseBody
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.sse.EventSourceListener
+import okhttp3.sse.EventSources
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.FieldMap
-import retrofit2.http.FormUrlEncoded
-import retrofit2.http.GET
-import retrofit2.http.HeaderMap
-import retrofit2.http.PATCH
-import retrofit2.http.POST
-import retrofit2.http.PUT
-import retrofit2.http.QueryMap
-import retrofit2.http.Url
+import retrofit2.http.*
 import java.io.IOException
 
 // Retrofit 服务接口，用于定义网络请求的接口方法
@@ -65,7 +59,7 @@ object RetrofitClient {
     private val retrofitInstances = mutableMapOf<String, Retrofit>()
 
     // 获取 Retrofit 实例，使用缓存来避免重复创建
-    private fun getRetrofit(baseUrl: String): Retrofit {
+    fun getRetrofit(baseUrl: String): Retrofit {
         return retrofitInstances.getOrPut(baseUrl) {
             Retrofit.Builder()
                 .baseUrl(baseUrl)
@@ -88,6 +82,8 @@ object ApiServiceS {
     const val BASE_URL_MAIN = "http://119.45.93.228:8080/api/"
     const val BASE_URL_POST = "http://119.45.93.228:8080/api/post/"
     const val BASE_URL_LIKE = "http://119.45.93.228:8080/api/like/"
+    const val BASE_URL_AI = "http://119.45.93.228:8080/api/ai/"
+    private const val TAG = "ApiServiceS"
 
     // 获取指定 baseUrl 的服务实例
     private fun getService(baseUrl: String) = RetrofitClient.getService(baseUrl)
@@ -112,7 +108,45 @@ object ApiServiceS {
         callback: (String?, Throwable?) -> Unit
     ) {
         Log.d("NetworkLog", "Sending POST to: ${baseUrl + endpoint}")
-        getService(baseUrl).post(endpoint, createJsonBody(params), headers).enqueue(createCallback(callback))
+        getService(baseUrl).post(endpoint, createJsonBody(params), headers)
+            .enqueue(createCallback(callback))
+    }
+
+    /**
+     * 支持 SSE 流式响应的方法，专用于 AI 对话
+     * @param baseUrl 服务基础地址
+     * @param endpoint 接口路径
+     * @param params 请求参数，会被序列化为 JSON
+     * @param headers 请求头信息
+     * @param listener SSE 事件监听器，可处理 onEvent、onClosed 等回调
+     */
+    fun ssePost(
+        baseUrl: String,
+        endpoint: String,
+        params: Map<String, String> = mapOf(),
+        headers: Map<String, String> = mapOf(),
+        listener: EventSourceListener
+    ) {
+        val url = baseUrl + endpoint
+        Log.d(TAG, "创建 SSE 请求 ➜ URL: $url, params: $params, headers: $headers")
+
+        val client = (RetrofitClient.getRetrofit(baseUrl).callFactory() as? OkHttpClient)
+            ?: OkHttpClient()
+        val body = createJsonBody(params)
+        val requestBuilder = Request.Builder()
+            .url(url)
+            .post(body)
+            .header("Accept", "text/event-stream")
+        headers.forEach { (key, value) ->
+            requestBuilder.header(key, value)
+        }
+        val request = requestBuilder.build()
+        Log.d(TAG, "SSE 请求构建完毕，开始连接…")
+
+        EventSources.createFactory(client)
+            .newEventSource(request, listener)
+
+        Log.d(TAG, "SSE newEventSource 调用完成")
     }
 
     // DELETE 请求方法

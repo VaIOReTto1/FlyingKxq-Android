@@ -62,7 +62,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:2.8.5") // 导航
     implementation(files("libs\\open_sdk_3.5.17.3_r75955a58_lite.jar")) // qq sdk
     implementation("com.squareup.okhttp3:okhttp:4.12.0") //网络请求
-    implementation("com.squareup.okio:okio:1.12.0") //网络请求
+    implementation("com.squareup.okio:okio:1.12.0") //网络请求=
     implementation("io.coil-kt:coil-compose:2.6.0") // 图片加载
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.webkit:webkit:1.12.1") // webview
@@ -70,6 +70,7 @@ dependencies {
     implementation("com.squareup.retrofit2:retrofit:2.9.0") // retrofit
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // retrofit
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
+    implementation("com.squareup.okhttp3:okhttp-sse:4.12.0")
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.common) // room
     testImplementation(libs.junit)

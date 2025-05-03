@@ -17,7 +17,9 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
-class UserInfoService(private val userDao: UserDao) {
+class UserInfoService(
+//    private val userDao: UserDao
+) {
     // region 数据结构
     data class UserInfoResponse(
         @SerializedName("code") val code: Int,
@@ -162,11 +164,11 @@ class UserInfoService(private val userDao: UserDao) {
             }
         }
 
-        userDao.runInTransaction {
-            userDao.upsertUser(userEntity)
-            userDao.deleteStatusByUser(data.userId)
-            statusEntities?.let { userDao.insertStatuses(it) }
-        }
+//        userDao.runInTransaction {
+//            userDao.upsertUser(userEntity)
+//            userDao.deleteStatusByUser(data.userId)
+//            statusEntities?.let { userDao.insertStatuses(it) }
+//        }
     }
     // endregion
 }

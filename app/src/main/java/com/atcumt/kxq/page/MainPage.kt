@@ -1,3 +1,4 @@
+// 文件：com/atcumt/kxq/page/MainPage.kt
 package com.atcumt.kxq.page
 
 import androidx.compose.foundation.background
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,136 +23,106 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.rememberNavController
-import com.atcumt.kxq.page.home.HomeTab
-import com.atcumt.kxq.page.login.view.LoginPage.LoginPage
-import com.atcumt.kxq.page.component.FlyText.NavBottomBarText
+import com.atcumt.kxq.page.home.HomePage
+import com.atcumt.kxq.page.news.NewsPage
 import com.atcumt.kxq.page.profile.ProfilePage
-import kotlinx.coroutines.launch
+import com.atcumt.kxq.page.component.FlyText.NavBottomBarText
 import com.atcumt.kxq.utils.wdp
+import kotlinx.coroutines.launch
+import androidx.navigation.compose.rememberNavController
+import com.atcumt.kxq.page.ai.view.ChatScreen
+import com.atcumt.kxq.page.login.view.LoginPage.LoginPage
 
 @Composable
 fun MainPage() {
-    // 定义底部导航栏的项目
-    val items = listOf("首页", "咨询", "圈圈", "我的")
-    // 创建 PagerState，用于控制和记录当前页面状态
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { items.size })
+    // 页面内容列表——注意中间第三项是 ChatScreen
+    val pages = listOf<@Composable () -> Unit>(
+        { HomePage() },
+        { NewsPage() },
+        { ChatScreen() },
+        { LoginPage(rememberNavController()) },
+        { ProfilePage() }
+    )
+    // 底栏文案列表：Chat 那项写 null，不显示文字
+    val labels = listOf("首页", "咨询", null, "圈圈", "我的")
 
-    Column(
-        modifier = Modifier.fillMaxSize() // 占满整个屏幕
-    ) {
-        // 主内容区域，支持页面切换
-        HorizontalPagerContent(
-            modifier = Modifier.weight(1f), // 剩余空间分配给内容区域
-            pagerState = pagerState
-        )
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
+    val scope = rememberCoroutineScope()
 
-        // 底部导航栏
-        BottomNavigationBar(
-            items = items,
-            pagerState = pagerState
-        )
-    }
-}
-
-@Composable
-private fun HorizontalPagerContent(
-    modifier: Modifier = Modifier,
-    pagerState: PagerState
-) {
-    // 禁用滑动手势的 HorizontalPager，仅支持通过点击切换页面
-    HorizontalPager(
-        state = pagerState,
-        modifier = modifier,
-        userScrollEnabled = false // 禁用滑动切换
-    ) { page ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            // 根据页面索引显示对应的内容
-            when (page) {
-                0 -> HomeTab() // 首页
-                1 -> LoginPage(rememberNavController()) // 咨询
-                2 -> LoginPage(rememberNavController()) // 圈圈
-                3 -> ProfilePage() // 我的
-            }
+    Column(Modifier.fillMaxSize()) {
+        // 禁用滑动，仅通过点击导航切页
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.weight(1f),
+            userScrollEnabled = false
+        ) { page ->
+            pages[page]()  // 按索引展示对应内容
         }
-    }
-}
 
-@Composable
-private fun BottomNavigationBar(
-    items: List<String>,
-    pagerState: PagerState
-) {
-    val scope = rememberCoroutineScope() // 用于切换页面的协程作用域
-
-    BottomAppBar(
-        modifier = Modifier
-            .fillMaxWidth() // 占满宽度
-            .height(41.wdp), // 高度固定
-        contentPadding = PaddingValues(0.wdp), // 无内边距
-        containerColor = MaterialTheme.colorScheme.background, // 背景颜色
-        content = {
-            // 使用 Row 将导航项水平排列
+        BottomAppBar(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(41.wdp),
+            containerColor = MaterialTheme.colorScheme.background,
+            contentPadding = PaddingValues(0.wdp)
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(), // 占满宽度
-                horizontalArrangement = Arrangement.SpaceEvenly, // 子项均匀分布
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 遍历导航项，逐个显示
-                items.forEachIndexed { index, label ->
-                    if (index == items.size / 2) { // 中间插入一个特殊按钮
+                labels.forEachIndexed { index, label ->
+                    if (label == null) {
+                        // 中间 “+” 聊天按钮
                         Box(
                             modifier = Modifier
-                                .width(41.wdp) // 按钮宽度
-                                .height(30.wdp) // 按钮高度
+                                .width(41.wdp)
+                                .height(30.wdp)
                                 .background(
-                                    color = MaterialTheme.colorScheme.primary, // 按钮背景颜色为 primary
-                                    shape = RoundedCornerShape(10.wdp) // 圆角效果
-                                ).clickable(
-                                    indication = null, // 无点击效果指示
+                                    color = MaterialTheme.colorScheme.primary,
+                                    shape = RoundedCornerShape(10.wdp)
+                                )
+                                .clickable(
+                                    indication = null,
                                     interactionSource = MutableInteractionSource()
-                                ) {},
-                            contentAlignment = Alignment.Center // 内容居中
+                                ) {
+                                    // 切到 ChatScreen（索引 2）
+                                    scope.launch { pagerState.animateScrollToPage(2) }
+                                },
+                            contentAlignment = Alignment.Center
                         ) {
                             Icon(
-                                Icons.Rounded.Add, // 图标内容为加号
-                                contentDescription = "+", // 描述信息
-                                tint = Color.White // 图标颜色
+                                Icons.Rounded.Add,
+                                contentDescription = "Chat",
+                                tint = Color.White
                             )
                         }
-                    }
-
-                    // 普通导航项
-                    NavBottomBarText(
-                        text = label,
-                        isSelected = pagerState.currentPage == index, // 高亮当前选中项
-                        modifier = Modifier
-                            .clickable(
-                                indication = null, // 无点击效果指示
-                                interactionSource = MutableInteractionSource()
-                            ) {
-                                // 点击时切换到对应页面
-                                scope.launch {
-                                    pagerState.scrollToPage(index) // 切换页面
+                    } else {
+                        // 普通文字导航
+                        NavBottomBarText(
+                            text = label,
+                            isSelected = pagerState.currentPage == index,
+                            modifier = Modifier
+                                .clickable(
+                                    indication = null,
+                                    interactionSource = MutableInteractionSource()
+                                ) {
+                                    scope.launch { pagerState.animateScrollToPage(index) }
                                 }
-                            }
-                    )
+                        )
+                    }
                 }
             }
         }
-    )
+    }
 }
 
 @Preview
 @Composable
 fun MainPagePreview() {
-    MainPage() // 预览 MainPage 组件
+    MainPage()
 }

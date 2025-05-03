@@ -95,7 +95,7 @@ class LoginViewModel : ViewModel() {
                         try {
                             loginResponse.data?.accessToken?.let {
                                 UserInfoService(
-                                    AppDatabase.getDatabase(context).userDao()
+//                                    AppDatabase.getDatabase(context).userDao()
                                 ).getUserInfoBlocking(
                                     it
                                 )
