@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
+    id("com.google.devtools.ksp")
+    id("com.google.dagger.hilt.android")
 }
 
 android {
@@ -71,6 +73,10 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0") // retrofit
     implementation("com.squareup.okhttp3:logging-interceptor:4.9.3")
     implementation("com.squareup.okhttp3:okhttp-sse:4.12.0")
+    implementation("com.google.dagger:hilt-android:2.49")
+    implementation("androidx.security:security-crypto:1.1.0-alpha07")
+    ksp("com.google.dagger:hilt-compiler:2.49")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.common) // room
     testImplementation(libs.junit)

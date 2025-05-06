@@ -27,6 +27,9 @@ object FlyColors {
 
     val FlyLightGray: Color
         @Composable get() = dynamicColor(light = Color(0xFFDDDDDD), dark = Color(0xFF1C1C1E))
+
+    val FlyChipBackground: Color
+        @Composable get() = dynamicColor(light = Color(0xFFEBEDF0), dark = Color(0xFF23242B))
 }
 
 @Composable

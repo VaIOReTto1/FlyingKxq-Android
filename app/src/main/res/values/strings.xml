@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">kxq</string>
+    <string name="yesterday_format">昨天 %1$s</string>
 </resources>

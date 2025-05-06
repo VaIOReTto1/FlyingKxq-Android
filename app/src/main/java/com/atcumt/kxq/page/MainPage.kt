@@ -50,7 +50,7 @@ fun MainPage() {
     // 底栏文案列表：Chat 那项写 null，不显示文字
     val labels = listOf("首页", "咨询", null, "圈圈", "我的")
 
-    val pagerState = rememberPagerState(initialPage = 0, pageCount = { pages.size })
+    val pagerState = rememberPagerState(initialPage = 1, pageCount = { pages.size })
     val scope = rememberCoroutineScope()
 
     Column(Modifier.fillMaxSize()) {

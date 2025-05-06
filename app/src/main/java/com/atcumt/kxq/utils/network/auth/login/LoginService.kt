@@ -6,7 +6,6 @@ import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.json.JSONObject
 import java.lang.Exception
 
 class LoginService {

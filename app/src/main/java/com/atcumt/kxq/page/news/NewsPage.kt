@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.atcumt.kxq.page.component.FlyingTab
+import com.atcumt.kxq.page.news.view.recommend.RecommendPage
 import com.atcumt.kxq.page.profile.ProfilePage
 import com.atcumt.kxq.ui.theme.KxqTheme
 import com.atcumt.kxq.utils.AdaptiveScreen
@@ -20,7 +21,7 @@ fun NewsPage() {
         FlyingTab(
             list = listOf("推荐", "校园", "学院"),
             content = {
-                ProfilePage()
+                RecommendPage()
             }
         )
     }
