@@ -1,7 +1,6 @@
 package com.atcumt.kxq.page.ai.view
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -39,7 +37,6 @@ import com.atcumt.kxq.page.ai.component.ChatInputField
 import com.atcumt.kxq.page.ai.component.ChatTopBar
 import com.atcumt.kxq.page.ai.component.MessageList
 import com.atcumt.kxq.page.ai.component.MessageState
-import com.atcumt.kxq.page.ai.viewmodel.ChatMessage
 import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.utils.hdp
 import com.atcumt.kxq.utils.wdp

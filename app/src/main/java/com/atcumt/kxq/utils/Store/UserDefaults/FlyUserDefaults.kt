@@ -23,11 +23,16 @@ enum class FlyUserDefaultsKey(val key: String) {
  * 抽象接口，方便 Mock & 替换为 DataStore 实现
  */
 interface FlyUserDefaults {
+    // 原有的枚举 key
     fun <T> set(value: T, forKey: FlyUserDefaultsKey)
     fun <T> get(key: FlyUserDefaultsKey): T?
     fun remove(key: FlyUserDefaultsKey)
     fun contains(key: FlyUserDefaultsKey): Boolean
     fun clearAll()
+
+    // 新增：字符串 key
+    fun setString(key: String, value: String)
+    fun getString(key: String): String?
 }
 
 /**
@@ -71,6 +76,13 @@ class SharedPrefsUserDefaults @Inject constructor(
         FlyUserDefaultsKey.entries.forEach { editor.remove(it.key) }
         editor.apply()
     }
+
+    override fun setString(key: String, value: String) {
+        prefs.edit().putString(key, value).apply()
+    }
+
+    override fun getString(key: String): String? =
+        prefs.getString(key, null)
 }
 
 /**

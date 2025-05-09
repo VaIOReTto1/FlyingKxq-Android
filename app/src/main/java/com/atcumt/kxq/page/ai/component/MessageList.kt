@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -98,7 +99,6 @@ fun MessageList(
     }
 }
 
-// ─── 子组件 ─────────────────────────────────────────────────────────────
 
 /**
  * [功能说明] 单条消息布局组件
@@ -112,11 +112,24 @@ private fun MessageItem(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = if (msg.role == "user") Arrangement.End else Arrangement.Start
     ) {
+        if (msg.isLoading) {
+            Box(
+                Modifier
+                    .size(24.wdp)
+                    .padding(8.wdp),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(
+                    strokeWidth = 2.wdp,
+                    modifier = Modifier.size(46.wdp),
+                    color = FlyColors.FlyMain
+                )
+            }
+        }
         ChatBubble(msg)
     }
 }
 
-// ─── 气泡组件 ─────────────────────────────────────────────────────────────
 
 /**
  * [功能说明] 消息气泡组件，支持 Markdown 打字机动画

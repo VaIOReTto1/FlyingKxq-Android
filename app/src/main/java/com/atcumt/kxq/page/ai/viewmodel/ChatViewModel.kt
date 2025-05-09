@@ -23,7 +23,7 @@ sealed class ChatIntent {
     data class SendMessage(val content: String) : ChatIntent() // 发送消息
 
     data object ToggleReasoning : ChatIntent()   // 切换深度思考
-    data object ToggleSearch    : ChatIntent()   // 切换联网搜索
+    data object ToggleSearch : ChatIntent()   // 切换联网搜索
 }
 
 // 2. State：包含会话列表、当前会话、消息、输入等
@@ -36,14 +36,16 @@ data class ChatState(
     val messages: List<ChatMessage> = emptyList(),
     val inputText: String = "",
     val reasoningEnabled: Boolean = false,  // 深度思考开关
-    val searchEnabled:    Boolean = false  // 联网搜索开关
+    val searchEnabled: Boolean = false  // 联网搜索开关
 )
 
 // 单条消息数据
 data class ChatMessage(
     val messageId: Int,
     val role: String,
-    val content: String
+    val content: String,
+    val isLoading: Boolean = false,
+    val timeStamp: Long = System.currentTimeMillis()
 )
 
 class ChatViewModel : ViewModel() {
@@ -59,7 +61,7 @@ class ChatViewModel : ViewModel() {
             ChatIntent.LoadHistory -> loadHistory()
             is ChatIntent.SendMessage -> sendMessage(intent.content)
             ChatIntent.ToggleReasoning -> _state.update { it.copy(reasoningEnabled = !it.reasoningEnabled) }
-            ChatIntent.ToggleSearch    -> _state.update { it.copy(searchEnabled    = !it.searchEnabled   ) }
+            ChatIntent.ToggleSearch -> _state.update { it.copy(searchEnabled = !it.searchEnabled) }
         }
     }
 
@@ -145,7 +147,7 @@ class ChatViewModel : ViewModel() {
         // 2) 在列表里再插入一个空的 assistant 消息
         _state.update {
             it.copy(
-                messages = it.messages + ChatMessage(-1, "assistant", "")
+                messages = it.messages + ChatMessage(-1, "assistant", "", true)
             )
         }
 
@@ -155,7 +157,7 @@ class ChatViewModel : ViewModel() {
             conversationId = "",
             content = content,
             reasoningEnabled = _state.value.reasoningEnabled,
-            searchEnabled    = _state.value.searchEnabled
+            searchEnabled = _state.value.searchEnabled
         )
 
         ConversationService().postConversation(dto) { sseData, error ->
@@ -165,7 +167,7 @@ class ChatViewModel : ViewModel() {
                     _state.update { state ->
                         val list = state.messages.toMutableList()
                         list[list.lastIndex] = list.last().copy(
-                            content = "出错了：${error.message}"
+                            content = "出错了：${error.message}", isLoading = false
                         )
                         state.copy(messages = list)
 
@@ -178,7 +180,7 @@ class ChatViewModel : ViewModel() {
                     _state.update { state ->
                         val list = state.messages.toMutableList()
                         val last = list.removeLast()
-                        list.add(last.copy(content = last.content + delta))
+                        list.add(last.copy(content = last.content + delta, isLoading = false))
                         state.copy(messages = list)
                     }
                 }

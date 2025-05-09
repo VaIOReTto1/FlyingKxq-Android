@@ -19,6 +19,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.utils.wdp
 
 /**
@@ -36,10 +37,10 @@ fun FlyIconButton(
     icon: ImageVector,
     contentDescription: String,
     modifier: Modifier = Modifier,
-    size: Dp = FlyButtonDefaults.IconSize,
-    iconTint: Color = FlyButtonDefaults.IconTint,
+    size: Dp = 24.wdp,
+    iconTint: Color = FlyColors.FlyBackground,
     backgroundColor: Color = Color.Transparent,
-    cornerRadius: Dp = FlyButtonDefaults.CornerRadius,
+    cornerRadius: Dp = 100.wdp,
     onClick: () -> Unit
 ) {
     Box(
@@ -64,16 +65,4 @@ fun FlyIconButton(
                 .size(size * 0.6f)
         )
     }
-}
-
-/**
- * 默认样式常量，可在全局主题中覆盖
- */
-object FlyButtonDefaults {
-    /** 按钮整体尺寸 */
-    val IconSize: Dp = 24.wdp
-    /** 图标默认着色 */
-    val IconTint: Color = MaterialTheme.colorScheme.onBackground
-    /** 圆角半径 */
-    val CornerRadius: Dp = 100.wdp
 }
