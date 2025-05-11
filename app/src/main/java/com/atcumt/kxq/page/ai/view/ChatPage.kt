@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.atcumt.kxq.page.ai.viewmodel.ChatIntent
 import com.atcumt.kxq.page.ai.viewmodel.ChatViewModel
 import com.atcumt.kxq.page.ai.component.ChatInputField
@@ -41,26 +40,40 @@ import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.utils.hdp
 import com.atcumt.kxq.utils.wdp
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Chat
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationDrawerItemDefaults
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = viewModel()
+    viewModel: ChatViewModel = hiltViewModel()
 ) {
+    // 订阅 ViewModel 的状态
     val uiState by viewModel.state.collectAsState()
     val scope = rememberCoroutineScope()
+    // 抽屉状态管理
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
-    // 持有同一个 MessageState，保留 listState
+    // 持有同一个 MessageState，用于保留滚动位置等状态
     val messageState = remember { MessageState() }
-    // 同步 ViewModel 的消息到 MessageState
+    // 当消息列表更新时，同步到 MessageState
     LaunchedEffect(uiState.messages) {
         messageState.messages.clear()
         messageState.messages += uiState.messages
     }
 
+    // 首次进入页面时加载会话列表
+    LaunchedEffect(viewModel) {
+        viewModel.dispatch(ChatIntent.LoadConversations)
+    }
+
+    // 记录输入框高度，用于内容区域底部留白
     var inputHeight by remember { mutableStateOf(0.hdp) }
     val density = LocalDensity.current
 
+    // 整个页面外层抽屉，用于会话列表
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
@@ -71,46 +84,84 @@ fun ChatScreen(
                     modifier = Modifier.padding(16.wdp)
                 )
                 Divider()
-                uiState.conversations.forEach { conv ->
-                    NavigationDrawerItem(
-                        label = {
-                            Text(
-                                text = conv.title,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        selected = conv.conversationId == uiState.currentConversationId,
-                        onClick = {
-                            viewModel.dispatch(
-                                ChatIntent.SelectConversation(
-                                    conv.conversationId,
-                                    conv.title
-                                )
-                            )
-                            scope.launch { drawerState.close() }
-                        },
-                        modifier = Modifier.padding(horizontal = 8.wdp)
+                // 会话列表加载中
+                if (uiState.isLoadingConversations && uiState.conversations.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.wdp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = FlyColors.FlyMain)
+                    }
+                } else if (uiState.conversations.isEmpty()) {
+                    // 没有会话时显示提示
+                    Text(
+                        text = "暂无会话",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier
+                            .padding(16.wdp)
+                            .align(Alignment.CenterHorizontally)
                     )
+                } else {
+                    // 展示会话项
+                    uiState.conversations.forEach { conv ->
+                        NavigationDrawerItem(
+                            icon = { Icon(Icons.Outlined.Chat, contentDescription = "会话图标") },
+                            label = {
+                                Text(
+                                    text = conv.title.ifBlank { "无标题会话" },
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            },
+                            selected = conv.conversationId == uiState.currentConversationId,
+                            onClick = {
+                                // 切换会话
+                                if (conv.conversationId != uiState.currentConversationId) {
+                                    viewModel.dispatch(
+                                        ChatIntent.SelectConversation(
+                                            conv.conversationId,
+                                            conv.title
+                                        )
+                                    )
+                                }
+                                scope.launch { drawerState.close() }
+                            },
+                            modifier = Modifier
+                                .padding(NavigationDrawerItemDefaults.ItemPadding)
+                                .padding(horizontal = 8.wdp)
+                        )
+                    }
                 }
             }
         }
     ) {
+        // 主内容区域，包括顶部栏、消息列表和输入框
         Scaffold(
             contentWindowInsets = WindowInsets.systemBars,
             topBar = {
                 ChatTopBar(
                     title = uiState.currentTitle.ifBlank { "元宝 DeepSeek" },
                     onMenu = { scope.launch { drawerState.open() } },
-                    onNew = { viewModel.dispatch(ChatIntent.NewConversation) }
+                    onNew = {
+                        // 新建对话
+                        viewModel.dispatch(ChatIntent.NewConversation)
+                        if (drawerState.isOpen) {
+                            scope.launch { drawerState.close() }
+                        }
+                    }
                 )
             },
             containerColor = FlyColors.FlyBackground
         ) { inner ->
-            Box(Modifier.fillMaxSize().padding(inner)) {
-                // 消息列表
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .padding(inner)
+            ) {
+                // 历史消息加载中指示器
                 if (uiState.isLoadingMessages) {
-                    // 可放一个加载 Spinner
                     Box(
                         Modifier
                             .fillMaxWidth()
@@ -120,27 +171,32 @@ fun ChatScreen(
                         CircularProgressIndicator(color = FlyColors.FlyMain)
                     }
                 }
-                // 1. 列表固定在顶部，不受 IME 影响
+                // 消息列表固定在上方，不随键盘弹出位移
                 MessageList(
                     state = messageState,
                     modifier = Modifier
-                        .fillMaxSize().padding(bottom = inputHeight)
+                        .fillMaxSize()
+                        .padding(bottom = inputHeight)
                 )
 
-                // 2. 输入框贴底，并让它随键盘上移
+                // 输入框贴底，随键盘上移
                 ChatInputField(
                     value = uiState.inputText,
                     onValueChange = { viewModel.dispatch(ChatIntent.UpdateInput(it)) },
-                    onSend = { viewModel.dispatch(ChatIntent.SendMessage(uiState.inputText)) },
+                    onSend = {
+                        if (uiState.inputText.isNotBlank()) {
+                            viewModel.dispatch(ChatIntent.SendMessage(uiState.inputText))
+                        }
+                    },
                     reasoningEnabled = uiState.reasoningEnabled,
                     searchEnabled = uiState.searchEnabled,
                     onDeepThink = { viewModel.dispatch(ChatIntent.ToggleReasoning) },
                     onWebSearch = { viewModel.dispatch(ChatIntent.ToggleSearch) },
-                    // 聚焦时自动滚到底
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .imePadding().onGloballyPositioned { coords ->
-                            // 将 px 转为 dp
+                        .imePadding()
+                        .onGloballyPositioned { coords ->
+                            // 将像素高度转换为 dp，用于列表底部留白
                             inputHeight = with(density) { coords.size.height.toDp() }
                         }
                 )
@@ -148,4 +204,3 @@ fun ChatScreen(
         }
     }
 }
-

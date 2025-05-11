@@ -1,7 +1,5 @@
 package com.atcumt.kxq.page.ai.component
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,27 +11,17 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import com.atcumt.kxq.page.ai.viewmodel.ChatMessage
 import com.atcumt.kxq.page.component.TypewriterFadeText
 import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.utils.wdp
-import com.atcumt.kxq.utils.hdp
-import com.atcumt.kxq.utils.ssp
-import kotlinx.coroutines.delay
-
-// ─── 样式配置对象 ─────────────────────────────────────────────────────────────
 
 /**
- * █████████████████████████████████
  * [功能说明] 消息组件全局样式配置
- * █████████████████████████████████
  */
 object MessageStyle {
     /** 消息气泡最大宽度 */
@@ -46,12 +34,9 @@ object MessageStyle {
     const val fadeInDuration = 200
 }
 
-// ─── 状态管理类 ─────────────────────────────────────────────────────────────
 
 /**
- * █████████████████████████████████
  * [功能说明] 消息列表状态管理
- * █████████████████████████████████
  */
 class MessageState(
     initialMessages: List<ChatMessage> = emptyList()
@@ -63,7 +48,6 @@ class MessageState(
     val listState = LazyListState()
 }
 
-// ─── 核心组件 ─────────────────────────────────────────────────────────────
 
 /**
  * [功能说明] 消息列表容器组件

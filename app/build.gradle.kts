@@ -77,6 +77,8 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha07")
     ksp("com.google.dagger:hilt-compiler:2.49")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation("io.noties.markwon:core:4.6.2")
+    implementation("io.noties.markwon:inline-parser:4.6.2")
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.common) // room
     testImplementation(libs.junit)

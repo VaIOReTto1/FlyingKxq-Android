@@ -20,6 +20,7 @@ class ConversationHistoryService {
         @SerializedName("status") val status: String,
         @SerializedName("createTime") val createTime: String
     )
+
     data class ConversationVO(
         @SerializedName("conversationId") val conversationId: String,
         @SerializedName("userId") val userId: String,
@@ -29,6 +30,7 @@ class ConversationHistoryService {
         @SerializedName("createTime") val createTime: String,
         @SerializedName("updateTime") val updateTime: String
     )
+
     data class ConversationHistoryResponse(
         @SerializedName("code") val code: Int?,
         @SerializedName("msg") val msg: String?,
@@ -87,9 +89,12 @@ class ConversationHistoryService {
         callback: (ConversationHistoryResponse?, Throwable?) -> Unit
     ) {
         ApiServiceS.get(
-            baseUrl  = ApiServiceS.BASE_URL_AI,
+            baseUrl = ApiServiceS.BASE_URL_AI,
             endpoint = "user/v1/conversation/$conversationId",
-            headers  = mapOf("Accept" to "application/json")
+            headers = mapOf(
+                "Accept" to "application/json",
+                "Authorization" to "Bearer NOmdUNImd5sEmpEzLF1Z3Y6T3rNUH1KHsTA95oHsRRAXYazXvRand2F1RU14QLMzySUu104A8mcp6N1blRMXlhKro92UR2f0RGzQB5QMpcG2NcDFvptt5TU7Pjo7xKUW1TuTquIGwZ9htX9zNRDkDX1GoNPkUrEPCXd1NPxODobIhkgHkJQfFKbpLqRqVkE78RsgmQTc4WN2ZfR2oAN2aoylHzr55busFGYtIAda7NCQFaqtBLlKjygj0zsYoAcZ"
+            )
         ) { resp, err ->
             handleResponse(resp, err, callback)
         }
