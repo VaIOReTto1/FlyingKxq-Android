@@ -1,5 +1,6 @@
 package com.atcumt.kxq.page.ai.view
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -7,15 +8,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.atcumt.kxq.page.ai.component.ChatDrawerContent
 import com.atcumt.kxq.page.ai.viewmodel.ChatIntent
 import com.atcumt.kxq.page.ai.viewmodel.ChatViewModel
 import com.atcumt.kxq.page.ai.component.ChatInputField
@@ -40,21 +39,26 @@ import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.utils.hdp
 import com.atcumt.kxq.utils.wdp
 import kotlinx.coroutines.launch
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Chat
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationDrawerItemDefaults
-import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
 fun ChatScreen(
-    viewModel: ChatViewModel = hiltViewModel()
+    viewModel: ChatViewModel = hiltViewModel(),
+    isCurrentPage: Boolean
 ) {
     // 订阅 ViewModel 的状态
     val uiState by viewModel.state.collectAsState()
     val scope = rememberCoroutineScope()
     // 抽屉状态管理
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+
+    // Effect to close drawer if page is not current
+    LaunchedEffect(isCurrentPage, drawerState.isOpen) {
+        if (!isCurrentPage && drawerState.isOpen) {
+            scope.launch {
+                drawerState.close()
+            }
+        }
+    }
 
     // 持有同一个 MessageState，用于保留滚动位置等状态
     val messageState = remember { MessageState() }
@@ -77,63 +81,20 @@ fun ChatScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
-                Text(
-                    text = "会话列表",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(16.wdp)
+            ModalDrawerSheet(
+                modifier = Modifier
+                    .width(260.wdp)
+                    .background(FlyColors.FlyBackground),
+                drawerContainerColor = FlyColors.FlyBackground,
+                drawerContentColor = FlyColors.FlyMain,
+            ) {
+                ChatDrawerContent(
+                    uiState = uiState,
+                    onSelectConversation = { id, title ->
+                        viewModel.dispatch(ChatIntent.SelectConversation(id, title))
+                    },
+                    closeDrawer = { scope.launch { drawerState.close() } }
                 )
-                Divider()
-                // 会话列表加载中
-                if (uiState.isLoadingConversations && uiState.conversations.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.wdp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = FlyColors.FlyMain)
-                    }
-                } else if (uiState.conversations.isEmpty()) {
-                    // 没有会话时显示提示
-                    Text(
-                        text = "暂无会话",
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier
-                            .padding(16.wdp)
-                            .align(Alignment.CenterHorizontally)
-                    )
-                } else {
-                    // 展示会话项
-                    uiState.conversations.forEach { conv ->
-                        NavigationDrawerItem(
-                            icon = { Icon(Icons.Outlined.Chat, contentDescription = "会话图标") },
-                            label = {
-                                Text(
-                                    text = conv.title.ifBlank { "无标题会话" },
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            },
-                            selected = conv.conversationId == uiState.currentConversationId,
-                            onClick = {
-                                // 切换会话
-                                if (conv.conversationId != uiState.currentConversationId) {
-                                    viewModel.dispatch(
-                                        ChatIntent.SelectConversation(
-                                            conv.conversationId,
-                                            conv.title
-                                        )
-                                    )
-                                }
-                                scope.launch { drawerState.close() }
-                            },
-                            modifier = Modifier
-                                .padding(NavigationDrawerItemDefaults.ItemPadding)
-                                .padding(horizontal = 8.wdp)
-                        )
-                    }
-                }
             }
         }
     ) {

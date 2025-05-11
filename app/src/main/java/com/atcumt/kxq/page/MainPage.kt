@@ -40,27 +40,27 @@ import com.atcumt.kxq.page.login.view.LoginPage.LoginPage
 @Composable
 fun MainPage() {
     // 页面内容列表——注意中间第三项是 ChatScreen
-    val pages = listOf<@Composable () -> Unit>(
-        { HomePage() },
-        { NewsPage() },
-        { ChatScreen() },
-        { LoginPage(rememberNavController()) },
-        { ProfilePage() }
-    )
-    // 底栏文案列表：Chat 那项写 null，不显示文字
     val labels = listOf("首页", "咨询", null, "圈圈", "我的")
+    val pageCount = labels.size // Define page count based on labels
 
-    val pagerState = rememberPagerState(initialPage = 1, pageCount = { pages.size })
+    val pagerState = rememberPagerState(initialPage = 0, pageCount = { pageCount })
     val scope = rememberCoroutineScope()
 
     Column(Modifier.fillMaxSize()) {
-        // 禁用滑动，仅通过点击导航切页
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.weight(1f),
-            userScrollEnabled = false
-        ) { page ->
-            pages[page]()  // 按索引展示对应内容
+            userScrollEnabled = false // As per user's previous setup, scrolling is disabled
+        ) { pageIndex ->
+            // Directly call composables and pass parameters as needed
+            when (pageIndex) {
+                0 -> HomePage()
+                1 -> NewsPage()
+                2 -> ChatScreen(isCurrentPage = pagerState.currentPage == pageIndex)
+                3 -> LoginPage(navController = rememberNavController()) // LoginPage might need a NavController
+                4 -> ProfilePage()
+                // else -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Page Not Found") } // Fallback for safety
+            }
         }
 
         BottomAppBar(
@@ -77,7 +77,7 @@ fun MainPage() {
             ) {
                 labels.forEachIndexed { index, label ->
                     if (label == null) {
-                        // 中间 “+” 聊天按钮
+                        // 中间 "+" 聊天按钮
                         Box(
                             modifier = Modifier
                                 .width(41.wdp)
