@@ -33,6 +33,7 @@ interface FlyUserDefaults {
     // 新增：字符串 key
     fun setString(key: String, value: String)
     fun getString(key: String): String?
+    fun remove(key: String)
 }
 
 /**
@@ -83,6 +84,10 @@ class SharedPrefsUserDefaults @Inject constructor(
 
     override fun getString(key: String): String? =
         prefs.getString(key, null)
+
+    override fun remove(key: String) {
+        prefs.edit().remove(key).apply()
+    }
 }
 
 /**

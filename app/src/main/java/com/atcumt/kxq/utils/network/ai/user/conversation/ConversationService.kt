@@ -83,6 +83,7 @@ class ConversationService {
 
                 override fun onClosed(eventSource: EventSource) {
                     Log.d(TAG, "SSE 连接已关闭")
+                    callback("{\"type\":\"COMPLETE\"}", null)
                 }
             }
         )

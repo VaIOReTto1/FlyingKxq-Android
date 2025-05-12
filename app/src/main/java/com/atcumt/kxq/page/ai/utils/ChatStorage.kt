@@ -26,6 +26,7 @@ interface ChatStorageService {
     suspend fun loadChatSessions(): List<ChatSession>
     suspend fun saveMessages(sessionId: String, messages: List<ChatMessage>)
     suspend fun loadMessages(sessionId: String): List<ChatMessage>
+    suspend fun deleteMessages(sessionId: String)
 }
 
 private const val KEY_SESSIONS = "chat_sessions"
@@ -71,6 +72,13 @@ class DefaultChatStorageService @Inject constructor(
                     ?.let { gson.fromJson<List<ChatMessage>>(it, msgListType) }
                     ?: emptyList()
             }.getOrElse { throw ChatError.StorageError(it.message ?: "加载消息失败") }
+        }
+
+    override suspend fun deleteMessages(sessionId: String): Unit =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                userDefaults.remove(keyMessages(sessionId))
+            }.onFailure { throw ChatError.StorageError(it.message ?: "删除消息失败") }
         }
 }
 

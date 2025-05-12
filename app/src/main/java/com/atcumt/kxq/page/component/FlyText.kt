@@ -1,5 +1,6 @@
 package com.atcumt.kxq.page.component
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -68,52 +69,6 @@ fun FlyText(
         style = style
     )
 }
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun TypewriterFadeText(
-    fullText: String,
-    charDelay: Long = 50L,
-    fadeInDuration: Int = 300,
-    modifier: Modifier = Modifier,
-    style: TextStyle = LocalTextStyle.current
-) {
-    // 将文字拆成字符列表
-    val chars = remember(fullText) { fullText.toList() }
-
-    // 已经展示的字符数
-    var revealCount by remember { mutableIntStateOf(0) }
-
-    // 用来对比上一次的 fullText，判断是不是同一个消息在追加
-    var prevText by remember { mutableStateOf("") }
-
-    LaunchedEffect(fullText) {
-
-        // 如果文本变短，或者是全新的空->非空，就认为是“新消息”，重置计数
-        if (fullText.length < prevText.length || prevText.isEmpty()) {
-            revealCount = 0
-        }
-        prevText = fullText
-
-        // 只对新增的字符做延迟动画
-        for (i in revealCount until fullText.length) {
-            delay(charDelay)
-            revealCount = i + 1
-        }
-    }
-
-    FlowRow(modifier = modifier) {
-        chars.take(revealCount).forEach { c ->
-            AnimatedVisibility(
-                visible = true,
-                enter = fadeIn(animationSpec = tween(fadeInDuration))
-            ) {
-                Text(text = c.toString(), style = style)
-            }
-        }
-    }
-}
-
 
 object FlyText {
     @Composable

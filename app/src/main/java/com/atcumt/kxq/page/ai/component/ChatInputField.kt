@@ -13,20 +13,20 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,6 +66,8 @@ import com.atcumt.kxq.utils.wdp
  * @param onDeepThink 切换深度思考回调
  * @param onWebSearch 切换联网搜索回调
  * @param modifier 外部修饰符
+ * @param isReplying 是否正在回复
+ * @param onStopStreaming 停止流式回复回调
  */
 @Composable
 fun  ChatInputField(
@@ -77,6 +79,8 @@ fun  ChatInputField(
     onDeepThink: () -> Unit,
     onWebSearch: () -> Unit,
     modifier: Modifier = Modifier,
+    isReplying: Boolean,
+    onStopStreaming: () -> Unit,
     onFocusChanged: (Boolean) -> Unit = {},
 ) {
     // 只在 value 从空到非空或反向时才触发重组
@@ -112,12 +116,22 @@ fun  ChatInputField(
                 onFocusChanged = onFocusChanged
             )
 
-            // 发送按钮
-            if (canSend)
+            // Send or Pause Button (发送或暂停按钮)
+            if (isReplying) {
+                AnimatedSendButton(
+                    onClick = onStopStreaming,
+                    description = "暂停",
+                    icon = Icons.Filled.Pause,
+                )
+            } else if (canSend) {
                 AnimatedSendButton(
                     onClick = onSend,
-                    modifier = Modifier.padding(start = 8.wdp)
+                    description = "发送",
+                    icon = Icons.Filled.KeyboardArrowUp,
                 )
+            } else {
+                Spacer(modifier = Modifier.padding(start = 8.wdp).size(40.hdp))
+            }
         }
 
         Spacer(modifier = Modifier.height(8.wdp))
@@ -190,8 +204,8 @@ private fun DynamicHeightInput(
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 40.hdp, max = 120.hdp).wrapContentHeight(Alignment.CenterVertically)
-                .padding(start = 12.wdp)
+                .wrapContentHeight(Alignment.CenterVertically) // 动态高度，与内容一致
+                .padding(start = 12.wdp, top = 8.hdp, bottom = 8.hdp), // 上下添加内边距
         )
     }
 }
@@ -202,7 +216,9 @@ private fun DynamicHeightInput(
 @Composable
 fun AnimatedSendButton(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    icon: ImageVector = Icons.Filled.Send,
+    description: String
 ) {
     // 用官方的 InteractionSource 来监听按下状态
     val interactionSource = remember { MutableInteractionSource() }
@@ -217,7 +233,7 @@ fun AnimatedSendButton(
         contentAlignment = Alignment.Center,
         modifier = modifier
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .size(width = 67.wdp, height = 28.wdp)
+            .size(width = 40.wdp, height = 28.wdp)
             .background(
                 color = FlyColors.FlyMain,
                 shape = RoundedCornerShape(20.wdp)
@@ -229,11 +245,10 @@ fun AnimatedSendButton(
                 onClick()
             }
     ) {
-        FlyText(
-            text = "发送",
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.ssp,
-            color = FlyColors.FlyBackground
+        Icon(
+            icon,
+            contentDescription = description,
+            tint = FlyColors.FlyBackground
         )
     }
 }
@@ -302,7 +317,9 @@ fun ChatInputFieldPreview() {
             onDeepThink = {},
             onWebSearch = {},
             reasoningEnabled = true,
-            searchEnabled = true
+            searchEnabled = true,
+            isReplying = false,
+            onStopStreaming = {}
         )
     }
 }

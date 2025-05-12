@@ -51,7 +51,24 @@ android {
     }
 }
 
+configurations.all {
+    exclude(group = "org.jetbrains", module = "annotations-java5")
+}
+
 dependencies {
+    // Markwon - Markdown 渲染库
+    implementation ("io.noties.markwon:core:4.6.2")
+    implementation ("io.noties.markwon:ext-strikethrough:4.6.2")
+    implementation ("io.noties.markwon:ext-tables:4.6.2")
+    implementation ("io.noties.markwon:ext-tasklist:4.6.2")
+    implementation ("io.noties.markwon:html:4.6.2")
+    implementation ("io.noties.markwon:image-glide:4.6.2")
+    implementation("io.noties.markwon:inline-parser:4.6.2")
+
+    // Prism4j - 代码语法高亮
+    implementation("io.noties.markwon:syntax-highlight:4.6.2")
+    implementation("io.noties:prism4j:2.0.0")
+    ksp("io.noties:prism4j-bundler:2.0.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -77,8 +94,6 @@ dependencies {
     implementation("androidx.security:security-crypto:1.1.0-alpha07")
     ksp("com.google.dagger:hilt-compiler:2.49")
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
-    implementation("io.noties.markwon:core:4.6.2")
-    implementation("io.noties.markwon:inline-parser:4.6.2")
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.common) // room
     testImplementation(libs.junit)

@@ -2,6 +2,7 @@ package com.atcumt.kxq.page.ai.view
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -75,6 +76,7 @@ fun ChatScreen(
 
     // 记录输入框高度，用于内容区域底部留白
     var inputHeight by remember { mutableStateOf(0.hdp) }
+    var keyboardVisible by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
     // 整个页面外层抽屉，用于会话列表
@@ -92,6 +94,9 @@ fun ChatScreen(
                     uiState = uiState,
                     onSelectConversation = { id, title ->
                         viewModel.dispatch(ChatIntent.SelectConversation(id, title))
+                    },
+                    onDeleteConversation = { conversationId ->
+                        viewModel.dispatch(ChatIntent.DeleteConversation(conversationId))
                     },
                     closeDrawer = { scope.launch { drawerState.close() } }
                 )
@@ -132,7 +137,8 @@ fun ChatScreen(
                         CircularProgressIndicator(color = FlyColors.FlyMain)
                     }
                 }
-                // 消息列表固定在上方，不随键盘弹出位移
+                
+                // 消息列表 - 留出输入框高度的底部空间
                 MessageList(
                     state = messageState,
                     modifier = Modifier
@@ -140,7 +146,7 @@ fun ChatScreen(
                         .padding(bottom = inputHeight)
                 )
 
-                // 输入框贴底，随键盘上移
+                // 输入框区域 - 使用imePadding以便随键盘一起移动
                 ChatInputField(
                     value = uiState.inputText,
                     onValueChange = { viewModel.dispatch(ChatIntent.UpdateInput(it)) },
@@ -149,13 +155,19 @@ fun ChatScreen(
                             viewModel.dispatch(ChatIntent.SendMessage(uiState.inputText))
                         }
                     },
+                    isReplying = uiState.isAiStreamingResponse,
+                    onStopStreaming = { viewModel.dispatch(ChatIntent.StopStreaming) },
                     reasoningEnabled = uiState.reasoningEnabled,
                     searchEnabled = uiState.searchEnabled,
                     onDeepThink = { viewModel.dispatch(ChatIntent.ToggleReasoning) },
                     onWebSearch = { viewModel.dispatch(ChatIntent.ToggleSearch) },
+                    onFocusChanged = { hasFocus ->
+                        // 输入框获得焦点时记录此状态
+                        keyboardVisible = hasFocus
+                    },
                     modifier = Modifier
                         .align(Alignment.BottomStart)
-                        .imePadding()
+                        .imePadding() // 处理键盘弹出时的位置
                         .onGloballyPositioned { coords ->
                             // 将像素高度转换为 dp，用于列表底部留白
                             inputHeight = with(density) { coords.size.height.toDp() }
