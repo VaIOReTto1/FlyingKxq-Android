@@ -16,7 +16,8 @@ import javax.inject.Singleton
  */
 enum class FlyUserDefaultsKey(val key: String) {
     IS_LOGGED_IN("isLoggedIn"),
-    NEWS_TYPE("newsType")
+    NEWS_TYPE("newsType"),
+    TOKEN_EXPIRES_AT("tokenExpiresAt")
 }
 
 /**

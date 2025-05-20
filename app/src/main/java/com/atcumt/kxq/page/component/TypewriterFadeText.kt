@@ -35,7 +35,7 @@ fun TypewriterFadeText(
     modifier: Modifier = Modifier,
     style: TextStyle = LocalTextStyle.current,
     textAlign: TextAlign? = null,
-    maxConcurrentChars: Int = 3,
+    maxConcurrentChars: Int = 1,
     preserveNewlines: Boolean = false,
     onComplete: (() -> Unit)? = null
 ) {

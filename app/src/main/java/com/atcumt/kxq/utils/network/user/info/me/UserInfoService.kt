@@ -17,9 +17,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.IOException
 
-class UserInfoService(
-//    private val userDao: UserDao
-) {
+class UserInfoService {
     // region 数据结构
     data class UserInfoResponse(
         @SerializedName("code") val code: Int,

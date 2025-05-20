@@ -139,8 +139,7 @@ fun RegisterContent(navController: NavController, viewModel: RegisterViewModel) 
         UserInputFields(
             fields = listOf(
                 "设置用户名（6-16位，英文数字下划线组成）" to "用户名",
-                "设置密码（8-20位，无空格）" to "密码",
-                "取个个性的名字吧" to "昵称"
+                "设置密码（8-20位，无空格）" to "密码"
             ),
             username = username,
             password = password,
@@ -158,7 +157,6 @@ fun RegisterContent(navController: NavController, viewModel: RegisterViewModel) 
                 .height(45.wdp)
                 .width(329.wdp),
             onClick = {
-                Log.d("RegisterViewModel", "校验失败")
                 viewModel.intentChannel.trySend(RegisterIntent.Register(username, password))
             }
         )

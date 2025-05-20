@@ -7,8 +7,11 @@ import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.lang.Exception
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class LoginService {
+@Singleton
+class LoginService @Inject constructor() {
     // region 数据结构
     // 登录请求数据类
     data class LoginRequest(

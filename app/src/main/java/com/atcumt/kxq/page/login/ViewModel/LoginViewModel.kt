@@ -3,12 +3,18 @@ package com.atcumt.kxq.page.login.ViewModel
 import android.app.Application
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.atcumt.kxq.utils.AppDatabase
+import com.atcumt.kxq.utils.Store.UserDefaults.FlyUserDefaults
+import com.atcumt.kxq.utils.Store.UserDefaults.FlyUserDefaultsKey
+import com.atcumt.kxq.utils.network.RetrofitClient.tokenProvider
+import com.atcumt.kxq.utils.network.TokenProvider
 import com.atcumt.kxq.utils.network.auth.login.LoginService
 import com.atcumt.kxq.utils.network.user.info.me.UserInfoService
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +23,7 @@ import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 // 表示UI的不同状态
 sealed class LoginState {
@@ -41,7 +48,11 @@ sealed class LoginIntent {
     data object NavigateToRegister : LoginIntent()
 }
 
-class LoginViewModel : ViewModel() {
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val tokenProvider: TokenProvider,
+    private val userDefaults: FlyUserDefaults
+) : ViewModel() {
     // 用于发送UI状态
     private val _state = MutableStateFlow<LoginState>(LoginState.Idle)
     val state: StateFlow<LoginState> = _state
@@ -89,14 +100,28 @@ class LoginViewModel : ViewModel() {
                     )
                 }
 
-                if (loginResponse.code == 200) {
+                if (loginResponse.code == 200&& loginResponse.data != null) {
                     // 2. 异步获取用户信息
                     launch(Dispatchers.IO) {
                         try {
-                            loginResponse.data?.accessToken?.let {
-                                UserInfoService(
-//                                    AppDatabase.getDatabase(context).userDao()
-                                ).getUserInfoBlocking(
+                            val data = loginResponse.data
+
+                            // —— 💾 存储 token ——
+                            tokenProvider.saveToken(
+                                data.accessToken.orEmpty(),
+                                data.refreshToken.orEmpty()
+                            )
+
+                            // —— 计算并保存到期时间戳（毫秒）——
+                            val expiresInSec = data.expiresIn ?: 0L
+                            val expiresAt = System.currentTimeMillis() + expiresInSec * 1000L
+                            userDefaults.set(expiresAt, FlyUserDefaultsKey.TOKEN_EXPIRES_AT)
+
+                            // —— 标记已登录 ——
+                            userDefaults.set(true, FlyUserDefaultsKey.IS_LOGGED_IN)
+
+                            loginResponse.data.accessToken?.let {
+                                UserInfoService().getUserInfoBlocking(
                                     it
                                 )
                             }

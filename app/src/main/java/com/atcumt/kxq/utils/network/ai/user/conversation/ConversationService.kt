@@ -21,14 +21,46 @@ class ConversationService {
     )
 
     private val localResponse = """
-    id:mock-1
-    event:newConversation
-    data:{"type":"newConversation","conversationId":"mock-1","messageId":1,"parentId":0}
-    
-    id:mock-1
-    event:message
-    data:{"type":"message","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":"这是本地模拟 SSE 消息。"}
-    """
+        id:mock-1
+        event:newConversation
+        data:{"type":"newConversation","conversationId":"mock-1","messageId":1,"parentId":0}
+        
+        id:mock-2
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":"**示例文章标题**"}
+        
+        id:mock-3
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":"\n*这是一段示例正文"}
+        
+        id:mock-4
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":"，用于展示斜体效果。"}
+        
+        id:mock-5
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":"*\n```cpp\ni"}
+        
+        id:mock-6
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":"nt add(int"}
+        
+        id:mock-7
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":" a, int b)"}
+        
+        id:mock-8
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":" {\n    ret"}
+        
+        id:mock-9
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":"urn a + b;"}
+        
+        id:mock-10
+        event:message
+        data:{"type":"message","conversationId":"mock-1","messageId":2,"parentId":1,"model":"gpt","role":"assistant","content":"\n}\n```"}
+        """
 
     fun postConversation(
         dto: ConversationDTO,
@@ -51,8 +83,7 @@ class ConversationService {
             endpoint = "user/v1/conversation",
             params = params,
             headers = mapOf(
-                "Accept" to "text/event-stream",
-                "Authorization" to "Bearer NOmdUNImd5sEmpEzLF1Z3Y6T3rNUH1KHsTA95oHsRRAXYazXvRand2F1RU14QLMzySUu104A8mcp6N1blRMXlhKro92UR2f0RGzQB5QMpcG2NcDFvptt5TU7Pjo7xKUW1TuTquIGwZ9htX9zNRDkDX1GoNPkUrEPCXd1NPxODobIhkgHkJQfFKbpLqRqVkE78RsgmQTc4WN2ZfR2oAN2aoylHzr55busFGYtIAda7NCQFaqtBLlKjygj0zsYoAcZ"
+                "Accept" to "text/event-stream"
             ),
             listener = object : EventSourceListener() {
                 override fun onOpen(eventSource: EventSource, response: Response) {

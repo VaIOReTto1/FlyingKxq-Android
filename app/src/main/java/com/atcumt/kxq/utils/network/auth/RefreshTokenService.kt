@@ -7,8 +7,11 @@ import com.google.gson.annotations.SerializedName
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.lang.Exception
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class RefreshTokenService {
+@Singleton
+class RefreshTokenService @Inject constructor() {
     // region 数据结构
     data class RefreshTokenRequest(
         @SerializedName("refreshToken") val refreshToken: String

@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.atcumt.kxq.ui.theme.KxqTheme
@@ -42,7 +43,7 @@ import com.atcumt.kxq.utils.wdp
 @Composable
 fun LoginPage(
     navController: NavController,
-    viewModel: LoginViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: LoginViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
 

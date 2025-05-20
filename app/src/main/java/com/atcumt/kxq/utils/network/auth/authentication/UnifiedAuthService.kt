@@ -54,7 +54,8 @@ class UnifiedAuthService {
             params = mapOf(), // 无请求体
             headers = mapOf(
                 "Cookie" to request.cookie,
-                "Accept" to "*/*"
+                "Accept" to "*/*",
+                "Device-Type" to "MOBILE_CLIENT"
             )
         ) { response, error ->
             handleResponse(response, error, callback)
