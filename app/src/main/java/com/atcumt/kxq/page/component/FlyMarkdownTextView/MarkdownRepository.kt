@@ -13,7 +13,6 @@ import io.noties.markwon.html.HtmlPlugin
 import io.noties.markwon.image.glide.GlideImagesPlugin
 import io.noties.markwon.syntax.Prism4jThemeDefault
 import io.noties.markwon.syntax.SyntaxHighlightPlugin
-import io.noties.prism4j.GrammarLocator
 import io.noties.prism4j.Prism4j
 import io.noties.prism4j.annotations.PrismBundle
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +62,7 @@ class MarkdownPrismLanguages
  * - 图片加载支持
  * - 各种Markdown扩展支持
  */
+
 @Singleton
 class MarkwonMarkdownRepository @Inject constructor(
     @ApplicationContext private val context: Context
@@ -75,6 +75,7 @@ class MarkwonMarkdownRepository @Inject constructor(
 //    private val prism4j by lazy {
 //        Prism4j(GrammarLocatorImpl())
 //    }
+
     /** 默认Markwon实例 - 不包含代码高亮 */
     private val markwonBasic by lazy {
         Markwon.builder(context)

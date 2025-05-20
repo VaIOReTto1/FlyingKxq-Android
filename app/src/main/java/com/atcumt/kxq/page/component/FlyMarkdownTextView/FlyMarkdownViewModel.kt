@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -54,6 +55,7 @@ sealed class MarkdownState {
 class FlyMarkdownViewModel @Inject constructor(
     private val repo: MarkdownRepository
 ) : ViewModel() {
+    private val latestMarkdown = MutableStateFlow("")
 
     private val _state = MutableStateFlow<MarkdownState>(
         MarkdownState.Success(
@@ -68,32 +70,46 @@ class FlyMarkdownViewModel @Inject constructor(
     private val parseCache = mutableMapOf<String, Spanned>()
 
     // Initialize empty Markdown parsing in a coroutine
+    /* 单一协程，生命周期内只启动一次 */
     init {
         viewModelScope.launch {
-            runCatching {
-                withContext(Dispatchers.IO) {
-                    repo.parse("", false)
+            var visibleChars = 0
+            var colorful = true
+            latestMarkdown.collectLatest { fullText ->
+                /* 每当有新字符 append，只更新目标长度 */
+                while (visibleChars < fullText.length) {
+                    val batch = minOf(5, fullText.length - visibleChars)
+                    visibleChars += batch
+                    val slice = fullText.substring(0, visibleChars)
+
+                    // 快速（无高亮）解析，可用缓存
+                    val spannedQuick = repo.parse(slice, isCodeBlockColorful = false)
+
+                    _state.value = MarkdownState.Success(
+                        spanned = spannedQuick,
+                        sourceMarkdown = slice,
+                        visibleChars = visibleChars
+                    )
+                    delay(40L * batch / 2)
                 }
-            }.onSuccess { spanned ->
-                _state.value = MarkdownState.Success(
-                    spanned = spanned,
-                    sourceMarkdown = "",
-                    visibleChars = 0
-                )
-                parseCache["__empty__false"] = spanned
-            }.onFailure { error ->
-                _state.value = MarkdownState.Error(
-                    message = "初始解析失败: ${error.localizedMessage ?: "未知错误"}",
-                    exception = error,
-                    retryIntent = null
-                )
+
+                /* 完成后做一次完整高亮解析（只做一次，避免卡顿） */
+                if (colorful) {
+                    val spanned = repo.parse(fullText, isCodeBlockColorful = true)
+                    _state.value = MarkdownState.Success(
+                        spanned = spanned,
+                        sourceMarkdown = fullText,
+                        visibleChars = fullText.length
+                    )
+                    colorful = false      // 已做过高亮
+                }
             }
         }
     }
 
     fun process(intent: MarkdownIntent) {
         when (intent) {
-            is MarkdownIntent.Parse -> parseMarkdown(intent)
+            is MarkdownIntent.Parse -> latestMarkdown.value = intent.markdown
             is MarkdownIntent.CancelParsing -> cancelCurrentParsing()
             is MarkdownIntent.ClearCache -> clearCache()
         }
@@ -116,10 +132,17 @@ class FlyMarkdownViewModel @Inject constructor(
 
             // 打字机动画逻辑
             currentParsingJob = viewModelScope.launch {
-                var visibleChars = 0
-                val fullText = intent.markdown
+                val currentState = state.value as? MarkdownState.Success
+                val previousFullText = currentState?.sourceMarkdown ?: ""
+                val previousVisibleChars = currentState?.visibleChars ?: 0
 
-                if (fullText.isBlank()) {
+                var visibleChars = if (intent.markdown.startsWith(previousFullText)) {
+                    previousVisibleChars
+                } else {
+                    0
+                }
+
+                if (intent.markdown.isBlank()) {
                     val emptySpanned = parseCache["__empty__false"] ?: withContext(Dispatchers.IO) {
                         repo.parse("", false)
                     }
@@ -131,9 +154,9 @@ class FlyMarkdownViewModel @Inject constructor(
                     return@launch
                 }
 
-                while (visibleChars < fullText.length) {
-                    val charsToAdd = minOf(intent.maxConcurrentChars, fullText.length - visibleChars)
-                    val nextChars = fullText.substring(visibleChars, visibleChars + charsToAdd)
+                while (visibleChars < intent.markdown.length) {
+                    val charsToAdd = minOf(intent.maxConcurrentChars, intent.markdown.length - visibleChars)
+                    val nextChars = intent.markdown.substring(visibleChars, visibleChars + charsToAdd)
                     val newlineIndex = nextChars.indexOf('\n')
                     val actualCharsToAdd = if (newlineIndex >= 0) {
                         if (newlineIndex == 0) 1 else newlineIndex
@@ -142,7 +165,7 @@ class FlyMarkdownViewModel @Inject constructor(
                     }
 
                     visibleChars += actualCharsToAdd
-                    val visibleText = fullText.substring(0, visibleChars)
+                    val visibleText = intent.markdown.substring(0, visibleChars)
                     val cacheKey = "${visibleText}_${intent.isCodeBlockColorful}"
 
                     // 检查缓存
@@ -158,7 +181,7 @@ class FlyMarkdownViewModel @Inject constructor(
                             withContext(Dispatchers.IO) {
                                 repo.parse(
                                     markdown = visibleText,
-                                    isCodeBlockColorful = intent.isCodeBlockColorful && visibleChars == fullText.length
+                                    isCodeBlockColorful = intent.isCodeBlockColorful && visibleChars == intent.markdown.length
                                 )
                             }
                         }.onSuccess { spanned ->
@@ -184,7 +207,7 @@ class FlyMarkdownViewModel @Inject constructor(
                     }
 
                     // 计算延迟
-                    val delayMs = if (visibleChars > 0 && fullText[visibleChars - 1] == '\n') {
+                    val delayMs = if (visibleChars > 0 && intent.markdown[visibleChars - 1] == '\n') {
                         intent.charDelay * 3
                     } else {
                         intent.charDelay * actualCharsToAdd / (if (actualCharsToAdd > 1) 2 else 1)

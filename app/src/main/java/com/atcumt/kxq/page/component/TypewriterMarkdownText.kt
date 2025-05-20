@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.atcumt.kxq.page.component.FlyMarkdownTextView.FlyMarkdown
 import com.atcumt.kxq.page.component.FlyMarkdownTextView.FlyMarkdownViewModel
 import com.atcumt.kxq.page.component.FlyMarkdownTextView.MarkdownError
@@ -55,21 +56,21 @@ fun TypewriterMarkdownText(
         return
     }
 
-    // 触发解析
-    LaunchedEffect(fullText, animate, isCodeBlockColorful) {
-        viewModel.process(
-            MarkdownIntent.Parse(
-                markdown = fullText,
-                isCodeBlockColorful = isCodeBlockColorful,
-                animate = animate,
-                charDelay = charDelay,
-                maxConcurrentChars = maxConcurrentChars
-            )
-        )
+    val state by viewModel.state.collectAsState()
+
+    // 使用 derivedStateOf 优化状态计算
+    val visibleText by remember(state) {
+        derivedStateOf {
+            (state as? MarkdownState.Success)?.sourceMarkdown ?: ""
+        }
     }
 
-    // 订阅状态
-    val state by viewModel.state.collectAsState()
+    // 触发解析
+    LaunchedEffect(fullText) {
+        viewModel.process(
+            MarkdownIntent.Parse(fullText, isCodeBlockColorful, animate)
+        )
+    }
 
     // 动画完成回调
     LaunchedEffect(state) {
@@ -86,7 +87,7 @@ fun TypewriterMarkdownText(
                     enter = fadeIn(animationSpec = tween(fadeInDuration))
                 ) {
                     FlyMarkdown(
-                        markdown = currentState.sourceMarkdown,
+                        markdown = visibleText,
                         modifier = Modifier.fillMaxWidth(),
                         textColor = textColor,
                         style = style,
@@ -145,6 +146,7 @@ fun MarkdownChatBubble(
                 .padding(vertical = 6.wdp, horizontal = 8.wdp)
                 .widthIn(max = 280.wdp)
         ) {
+//            val bubbleVm: FlyMarkdownViewModel = viewModel(key = "${msg.messageId}")
             if (!msg.role.equals("user", ignoreCase = true)) {
                 // 使用Markdown渲染 + 打字机动画
                 TypewriterMarkdownText(
@@ -153,7 +155,8 @@ fun MarkdownChatBubble(
                     charDelay = 40L, // MessageStyle.charDelay
                     fadeInDuration = 200, // MessageStyle.fadeInDuration
                     style = MaterialTheme.typography.bodyMedium.copy(color = segColor),
-                    textColor = segColor
+                    textColor = segColor,
+//                    viewModel = bubbleVm,
                 )
             } else {
                 // 使用普通打字机效果
