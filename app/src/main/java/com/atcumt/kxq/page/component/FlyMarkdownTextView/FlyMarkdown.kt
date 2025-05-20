@@ -25,22 +25,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.atcumt.kxq.utils.ssp
 
-/**
- * [功能说明] Markdown 渲染组件
- * @param markdown Markdown 文本
- * @param modifier 布局修饰符
- * @param onLinkClick 链接点击回调 (返回true表示已处理，false表示交由系统处理)
- * @param viewModel MarkdownViewModel 实例，通常由 hilt 注入
- * @param textColor 文本颜色，默认为主题文本颜色
- * @param errorColor 错误颜色，默认为浅红色
- * @param lineSpacingMultiplier 行间距倍数，默认为1.5
- * @param lineSpacingExtra 行间距额外增加值，默认为0dp
- * @param isCodeBlockColorful 代码块是否启用语法高亮，默认为true
- */
 @Composable
 fun FlyMarkdown(
     markdown: String,
@@ -48,6 +37,7 @@ fun FlyMarkdown(
     onLinkClick: ((String) -> Boolean)? = null,
     viewModel: FlyMarkdownViewModel = hiltViewModel(),
     textColor: Color = FlyColors.FlyText,
+    style: TextStyle = MaterialTheme.typography.bodyMedium,
     errorColor: Color = Color(0xFFEF9A9A),
     lineSpacingMultiplier: Float = 1.5f,
     lineSpacingExtra: Float = 0f,
@@ -56,61 +46,44 @@ fun FlyMarkdown(
     val state by viewModel.state.collectAsState()
     val density = LocalDensity.current
 
-    LaunchedEffect(markdown, isCodeBlockColorful) {
-        viewModel.process(MarkdownIntent.Parse(
-            markdown = markdown, 
-            isCodeBlockColorful = isCodeBlockColorful
-        ))
-    }
-
     Box(
         modifier = modifier.fillMaxWidth(),
         contentAlignment = Alignment.Center
     ) {
-        when (state) {
-            is MarkdownState.Loading -> {
-                // 骨架屏加载状态
-                MarkdownSkeleton(
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        when (val currentState = state) {
             is MarkdownState.Success -> {
-                AndroidView(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.wdp),
-                    factory = { context ->
-                        TextView(context).apply {
-                            setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
-                            setTextColor(textColor.toArgb())
-//                            setLinkTextColor(FlyColors.FlyMain.toArgb())
-                            // 使链接可点击，但不显示下划线
-                            isClickable = true 
-                            linksClickable = true
-                        }
-                    },
-                    update = { textView ->
-                        val successState = (state as? MarkdownState.Success) ?: return@AndroidView
-                        
-                        // 设置Markdown内容
-                        textView.text = successState.spanned
-                        
-                        // 设置链接点击处理
-                        if (onLinkClick != null) {
-                            // 提取文本中的所有链接并设置点击处理器
-                            textView.setOnClickListener { view ->
-                                // 处理链接点击 (完整实现需处理精确点击位置)
-                                // 简化示例: 链接处理放在Repository中更合适
-                                // 这里仅作示意
+                AnimatedVisibility(
+                    visible = true,
+                    enter = fadeIn(animationSpec = tween(200)) + expandVertically(tween(200))
+                ) {
+                    AndroidView(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.wdp),
+                        factory = { context ->
+                            TextView(context).apply {
+                                setLineSpacing(lineSpacingExtra, lineSpacingMultiplier)
+                                setTextColor(textColor.toArgb())
+                                textSize = with(density) { style.fontSize.toPx() / density.density }
+                                isClickable = true
+                                linksClickable = true
+                            }
+                        },
+                        update = { textView ->
+                            textView.text = currentState.spanned
+                            if (onLinkClick != null) {
+                                // 实现链接点击处理（需根据实际需求完善）
+                                textView.setOnClickListener { view ->
+                                    // 处理链接点击
+                                }
                             }
                         }
-                    }
-                )
+                    )
+                }
             }
             is MarkdownState.Error -> {
-                // 错误状态显示
                 MarkdownError(
-                    errorMessage = (state as MarkdownState.Error).message,
+                    errorMessage = currentState.message,
                     errorColor = errorColor,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -119,52 +92,6 @@ fun FlyMarkdown(
     }
 }
 
-/**
- * [功能说明] Markdown 骨架屏
- * @param modifier 布局修饰符
- */
-@Composable
-fun MarkdownSkeleton(modifier: Modifier = Modifier) {
-    Column(modifier = modifier.padding(8.dp)) {
-        // 标题骨架
-        Box(
-            Modifier
-                .fillMaxWidth(0.8f)
-                .height(20.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(FlyColors.FlyLightGray)
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        
-        // 段落骨架
-        repeat(3) { 
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(14.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(FlyColors.FlyLightGray.copy(alpha = 0.7f))
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-        
-        // 短段骨架
-        Box(
-            Modifier
-                .fillMaxWidth(0.6f)
-                .height(14.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .background(FlyColors.FlyLightGray.copy(alpha = 0.5f))
-        )
-    }
-}
-
-/**
- * [功能说明] Markdown 错误显示
- * @param errorMessage 错误信息
- * @param errorColor 错误颜色
- * @param modifier 布局修饰符
- */
 @Composable
 fun MarkdownError(
     errorMessage: String,
@@ -189,7 +116,6 @@ fun MarkdownError(
                 contentDescription = "错误",
                 tint = errorColor
             )
-            
             Text(
                 text = "Markdown解析错误: $errorMessage",
                 color = MaterialTheme.colorScheme.error,

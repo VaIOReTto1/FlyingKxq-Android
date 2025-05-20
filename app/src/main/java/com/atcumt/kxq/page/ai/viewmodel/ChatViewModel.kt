@@ -20,11 +20,11 @@ import javax.inject.Inject
 
 // 1. Intent：扩展了会话加载、选中、新建、输入更新、历史加载、发送消息，以及深度思考和联网搜索开关
 sealed class ChatIntent {
-    object LoadConversations : ChatIntent()                // 加载会话列表
+    data object LoadConversations : ChatIntent()                // 加载会话列表
     data class SelectConversation(val id: String, val title: String) : ChatIntent() // 选中指定会话
-    object NewConversation : ChatIntent()                  // 新建会话
+    data object NewConversation : ChatIntent()                  // 新建会话
     data class UpdateInput(val text: String) : ChatIntent()// 更新输入框内容
-    object LoadHistory : ChatIntent()                      // 加载当前会话历史
+    data object LoadHistory : ChatIntent()                      // 加载当前会话历史
     data class SendMessage(val userInputText: String) :
         ChatIntent() // 发送消息 (renamed content to userInputText for clarity)
 
@@ -440,6 +440,7 @@ class ChatViewModel @Inject constructor(
                 messages[lastAssistantMsgIndex] = messages[lastAssistantMsgIndex].copy(
                     replyText = messages[lastAssistantMsgIndex].replyText + "($errorMessage)", // Append error to replyText
                     isLoading = false,
+                    isReasoning = false
                 )
             } else {
                 messages.add(ChatMessage(
