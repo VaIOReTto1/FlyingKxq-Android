@@ -3,6 +3,7 @@ package com.atcumt.kxq.page.component.FlyMarkdownTextView
 import android.content.Context
 import android.text.Spanned
 import android.util.Log
+import android.util.LruCache
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.noties.markwon.Markwon
 import io.noties.markwon.core.CorePlugin
@@ -69,7 +70,9 @@ class MarkwonMarkdownRepository @Inject constructor(
 ) : MarkdownRepository {
 
     /** 内存缓存 - 用于暂存解析结果 */
-    private val memoryCache = ConcurrentHashMap<String, Spanned>()
+    private val memoryCache = object : LruCache<String, Spanned>(256) {
+        override fun sizeOf(key: String, value: Spanned) = value.length
+    }
 
     /** 代码高亮实例 */
 //    private val prism4j by lazy {
@@ -133,7 +136,7 @@ class MarkwonMarkdownRepository @Inject constructor(
                 }
 
                 // 存入缓存
-                memoryCache[cacheKey] = result
+                memoryCache.put(cacheKey, result)
 
                 return@withContext result
 
@@ -157,6 +160,6 @@ class MarkwonMarkdownRepository @Inject constructor(
      * 清除缓存
      */
     override suspend fun clearCache() = withContext(Dispatchers.IO) {
-        memoryCache.clear()
+        memoryCache.evictAll()
     }
 }

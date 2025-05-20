@@ -23,12 +23,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Debug 下启用 Mock
+            buildConfigField("boolean", "USE_MOCK", "true")
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("boolean", "USE_MOCK", "false")
         }
     }
     compileOptions {
@@ -40,6 +45,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.1"
