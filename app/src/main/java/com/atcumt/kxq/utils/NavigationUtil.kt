@@ -2,6 +2,8 @@ package com.atcumt.kxq.utils
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.navigation.NavController
@@ -13,18 +15,28 @@ import com.atcumt.kxq.page.MainPage
 import com.atcumt.kxq.page.login.view.RegisterPage.RegisterPage
 import com.atcumt.kxq.page.login.view.RegisterPage.SchoolCertificationPage
 import com.atcumt.kxq.page.profile.edit.NameEidtPage
+import com.atcumt.kxq.utils.Store.FlyKeyChain.FlyKeyChain
+import com.atcumt.kxq.utils.Store.FlyKeyChain.FlyKeyChainType
+import com.atcumt.kxq.utils.Store.UserDefaults.FlyUserDefaults
+import com.atcumt.kxq.utils.Store.UserDefaults.FlyUserDefaultsKey
 
 @Composable
 fun NavigationSetup() {
     // 创建 NavController
     val navController = rememberNavController()
 
+    val authVm: AuthViewModel = hiltViewModel()
+
+    // 立即读取一次 isTokenValid，决定起点
+    val start = remember { if (authVm.isTokenValid) "main" else "login" }
+
+
     LaunchedEffect(navController) {
         NavViewModel.navController.value = navController
     }
     NavHost(
         navController = navController,
-        startDestination = "main"
+        startDestination = start
     ) {
         composable("login") {
             LoginPage(navController = navController)

@@ -89,7 +89,7 @@ object RetrofitClient {
                 .addInterceptor(authInterceptor)          // 自动加 Token
                 .authenticator(refreshAuthenticator)      // 401→刷新→重试
 //                .addInterceptor(HttpLoggingInterceptor().setLevel(HttpLoggingInterceptor.Level.BODY)) // 可选日志
-            if (BuildConfig.USE_MOCK && baseUrl != ApiServiceS.BASE_URL_AI && baseUrl != ApiServiceS.BASE_URL_AUTH) builder.addInterceptor(
+            if (BuildConfig.USE_MOCK) builder.addInterceptor(
                 MockInterceptor(MockStore.maps[baseUrl + endpoint] ?: emptyMap())
             )
 

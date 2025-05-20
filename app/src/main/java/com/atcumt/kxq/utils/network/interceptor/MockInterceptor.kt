@@ -6,6 +6,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import java.io.IOException
 
 /**
  * 简易 Mock：在 BuildConfig.USE_MOCK == true 时拦截并返回本地 Json。
@@ -16,18 +17,37 @@ class MockInterceptor(
 ) : Interceptor {
 
     override fun intercept(chain: Interceptor.Chain): Response {
-        if (!BuildConfig.USE_MOCK) return chain.proceed(chain.request())
+        val request = chain.request()
+        // 1. 如果没开启 Mock 或者没有对应 mock 数据，则直接走真网
+        if (!BuildConfig.USE_MOCK) return chain.proceed(request)
+        val path = request.url.encodedPath
+        val mockBody = mockMap.entries
+            .firstOrNull { it.key.matches(path) }
+            ?.value
+            ?: return chain.proceed(request)
 
-        val path = chain.request().url.encodedPath
-        val mockBody = mockMap.entries.firstOrNull { path.matches(it.key) }?.value
-            ?: return chain.proceed(chain.request()) // 未命中则走真网
+        // 2. 尝试真网请求
+        val realResponse = try {
+            chain.proceed(request)
+        } catch (e: IOException) {
+            null  // 网络异常
+        }
 
+        // 3. 如果真网响应正常（2xx），就返回真值
+        if (realResponse?.isSuccessful == true) {
+            return realResponse
+        }
+
+        // 4. 真网失败或异常，回退到 Mock 响应
         return Response.Builder()
-            .code(200)
+            .code(200)  // Mock 总是 200
             .protocol(Protocol.HTTP_1_1)
-            .message("OK-MOCK")
-            .request(chain.request())
-            .body(mockBody.toResponseBody("application/json".toMediaType()))
+            .message("OK-MOCK-FALLBACK")
+            .request(request)
+            .body(
+                mockBody
+                    .toResponseBody("application/json".toMediaType())
+            )
             .build()
     }
 }
