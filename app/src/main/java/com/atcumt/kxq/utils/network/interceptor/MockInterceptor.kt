@@ -18,7 +18,7 @@ class MockInterceptor(
 
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
-        // 1. 如果没开启 Mock 或者没有对应 mock 数据，则直接走真网
+        // 1. 如果没开启 Mock 或者没有对应 mock 数据，则直接走真网ss
         if (!BuildConfig.USE_MOCK) return chain.proceed(request)
         val path = request.url.encodedPath
         val mockBody = mockMap.entries
