@@ -62,6 +62,8 @@ data class ChatMessage(
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
+    private val conversationService: ConversationService,
+    private val conversationsService: ConversationsService,
     private val chatStorageService: ChatStorageService
 ) : ViewModel() {
     private val _state = MutableStateFlow(ChatState())
@@ -96,7 +98,7 @@ class ChatViewModel @Inject constructor(
     // 加载所有会话列表
     private fun loadConversations() {
         _state.update { it.copy(isLoadingConversations = true) }
-        ConversationsService().getConversations(1, 100) { resp, _ ->
+        conversationsService.getConversations(1, 100) { resp, _ ->
             viewModelScope.launch {
                 val list = resp?.data?.data ?: emptyList()
                 _state.update {
@@ -149,7 +151,7 @@ class ChatViewModel @Inject constructor(
     /** 拉取所有会话列表 */
     fun refreshConversationList() {
         _state.update { it.copy(isLoadingConversations = true) }
-        ConversationsService().getConversations(1, 100) { resp, _ ->
+        conversationsService.getConversations(1, 100) { resp, _ ->
             viewModelScope.launch {
                 val list = resp?.data?.data ?: emptyList()
                 _state.update {
@@ -165,7 +167,7 @@ class ChatViewModel @Inject constructor(
     // 加载当前会话的历史消息
     private fun loadHistory() {
         val convId = _state.value.currentConversationId
-        _state.update { it.copy(isAiStreamingResponse = false) } // Ensure AI not streaming during history load
+//        _state.update { it.copy(isAiStreamingResponse = false) } // Ensure AI not streaming during history load
 
         if (convId.isBlank()) {
             _state.update { it.copy(isLoadingMessages = false, messages = emptyList()) }
@@ -178,8 +180,6 @@ class ChatViewModel @Inject constructor(
                 // Ensure historical messages are not in loading/reasoning state
                 it.copy(
                     isLoading = false,
-                    reasoningText = "",
-                    replyText = ""
                 )
             }
             if (localMessages.isNotEmpty()) {
@@ -258,7 +258,7 @@ class ChatViewModel @Inject constructor(
             searchEnabled = _state.value.searchEnabled
         )
 
-        ConversationService().postConversation(dto) { sseData, error ->
+        conversationService.postConversation(dto) { sseData, error ->
             viewModelScope.launch {
                 var conversationIdToSave = _state.value.currentConversationId
 

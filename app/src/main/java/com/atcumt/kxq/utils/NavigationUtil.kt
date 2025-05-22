@@ -28,7 +28,7 @@ fun NavigationSetup() {
     val authVm: AuthViewModel = hiltViewModel()
 
     // 立即读取一次 isTokenValid，决定起点
-    val start = remember { if (authVm.isTokenValid) "main" else "login" }
+    val start = remember { if (authVm.isTokenValid) "login" else "login" }
 
 
     LaunchedEffect(navController) {

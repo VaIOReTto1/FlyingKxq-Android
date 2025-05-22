@@ -3,8 +3,9 @@ package com.atcumt.kxq.utils.network.ai.user
 import com.atcumt.kxq.utils.network.ApiServiceS
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import javax.inject.Inject
 
-class ConversationsService {
+class ConversationsService  @Inject constructor() {
     data class ConversationPageVO(
         @SerializedName("conversationId") val conversationId: String,
         @SerializedName("title") val title: String,

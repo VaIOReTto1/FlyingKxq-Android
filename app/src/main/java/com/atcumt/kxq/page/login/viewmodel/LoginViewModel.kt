@@ -1,16 +1,10 @@
-package com.atcumt.kxq.page.login.ViewModel
+package com.atcumt.kxq.page.login.viewmodel
 
-import android.app.Application
-import android.content.Context
 import android.os.Build
-import android.util.Log
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.atcumt.kxq.utils.AppDatabase
 import com.atcumt.kxq.utils.Store.UserDefaults.FlyUserDefaults
 import com.atcumt.kxq.utils.Store.UserDefaults.FlyUserDefaultsKey
-import com.atcumt.kxq.utils.network.RetrofitClient.tokenProvider
 import com.atcumt.kxq.utils.network.TokenProvider
 import com.atcumt.kxq.utils.network.auth.login.LoginService
 import com.atcumt.kxq.utils.network.user.info.me.UserInfoService
@@ -44,7 +38,7 @@ sealed class Event {
 
 // 表示用户交互意图
 sealed class LoginIntent {
-    data class Login(val username: String, val password: String, val context: Context) : LoginIntent()
+    data class Login(val username: String, val password: String) : LoginIntent()
     data object NavigateToRegister : LoginIntent()
 }
 
@@ -78,14 +72,14 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             intentChannel.consumeAsFlow().collect { intent ->
                 when (intent) {
-                    is LoginIntent.Login -> handleLogin(intent.username, intent.password,intent.context)
+                    is LoginIntent.Login -> handleLogin(intent.username, intent.password)
                     is LoginIntent.NavigateToRegister -> navigateToRegister()
                 }
             }
         }
     }
 
-    private fun handleLogin(username: String, password: String,context: Context) {
+    private fun handleLogin(username: String, password: String) {
         viewModelScope.launch {
             _state.value = LoginState.Loading
             try {

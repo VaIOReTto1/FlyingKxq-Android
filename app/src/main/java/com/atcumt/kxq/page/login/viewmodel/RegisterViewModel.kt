@@ -1,4 +1,4 @@
-package com.atcumt.kxq.page.login.ViewModel
+package com.atcumt.kxq.page.login.viewmodel
 
 import android.os.Build
 import android.util.Log

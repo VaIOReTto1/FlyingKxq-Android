@@ -90,22 +90,3 @@ class SharedPrefsUserDefaults @Inject constructor(
         prefs.edit().remove(key).apply()
     }
 }
-
-/**
- * Hilt Module：提供 SharedPreferences & FlyUserDefaults
- */
-@Module
-@InstallIn(SingletonComponent::class)
-object FlyUserDefaultsModule {
-
-    @Provides @Singleton
-    fun provideSharedPreferences(
-        @ApplicationContext ctx: Context
-    ): SharedPreferences =
-        ctx.getSharedPreferences("fly_user_defaults", Context.MODE_PRIVATE)
-
-    @Provides @Singleton
-    fun provideFlyUserDefaults(
-        impl: SharedPrefsUserDefaults
-    ): FlyUserDefaults = impl
-}

@@ -1,6 +1,5 @@
 package com.atcumt.kxq.page.login.view.RegisterPage
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,9 +40,9 @@ import com.atcumt.kxq.page.component.FlyText.AppbarTitle
 import com.atcumt.kxq.page.component.FlyText.ButtonText
 import com.atcumt.kxq.page.component.FlyText.LabelText
 import com.atcumt.kxq.page.component.FlyText.WeakenButtonText
-import com.atcumt.kxq.page.login.ViewModel.Event
-import com.atcumt.kxq.page.login.ViewModel.RegisterIntent
-import com.atcumt.kxq.page.login.ViewModel.RegisterViewModel
+import com.atcumt.kxq.page.login.viewmodel.Event
+import com.atcumt.kxq.page.login.viewmodel.RegisterIntent
+import com.atcumt.kxq.page.login.viewmodel.RegisterViewModel
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
 import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.utils.wdp

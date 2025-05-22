@@ -6,8 +6,11 @@ import com.google.gson.annotations.SerializedName
 import okhttp3.Response
 import okhttp3.sse.EventSource
 import okhttp3.sse.EventSourceListener
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class ConversationService {
+@Singleton
+class ConversationService @Inject constructor() {
     companion object {
         private const val TAG = "ConversationService"
     }
@@ -127,7 +130,14 @@ class ConversationService {
     ) {
         if (error != null || response == null) {
             Log.w(TAG, "使用本地模拟响应")
-            callback(localResponse, null)
+            val events = localResponse.split("\n\n")
+            events.forEach { eventBlock ->
+                val dataLine = eventBlock.lines().find { it.startsWith("data:") }
+                val data = dataLine?.substringAfter("data:")?.trim()
+                if (data != null) {
+                    callback(data, null)
+                }
+            }
         } else {
             callback(response, null)
         }

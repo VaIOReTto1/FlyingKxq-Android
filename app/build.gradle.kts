@@ -40,6 +40,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
+    lint {
+        // https://github.com/bumptech/glide/issues/4940
+        lintConfig = file("$rootDir/android-lint.xml")
+    }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }

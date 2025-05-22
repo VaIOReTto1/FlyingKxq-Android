@@ -11,7 +11,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,11 +32,10 @@ import com.atcumt.kxq.page.component.FlyText.LabelText
 import com.atcumt.kxq.page.component.FlyText.SubTitle
 import com.atcumt.kxq.page.component.FlyText.Title
 import com.atcumt.kxq.page.component.FlyText.WeakenButtonText
-import com.atcumt.kxq.page.login.ViewModel.Event
-import com.atcumt.kxq.page.login.ViewModel.LoginIntent
-import com.atcumt.kxq.page.login.ViewModel.LoginViewModel
+import com.atcumt.kxq.page.login.viewmodel.Event
+import com.atcumt.kxq.page.login.viewmodel.LoginIntent
+import com.atcumt.kxq.page.login.viewmodel.LoginViewModel
 import com.atcumt.kxq.page.login.utils.FlyLoginTextField
-import com.atcumt.kxq.utils.AppDatabase
 import com.atcumt.kxq.utils.wdp
 
 @Composable
@@ -140,8 +138,7 @@ fun LoginForm(
                 viewModel.intentChannel.trySend(
                     LoginIntent.Login(
                         username,
-                        password,
-                        context
+                        password
                     )
                 )
             }
