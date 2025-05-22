@@ -1,9 +1,10 @@
 package com.atcumt.kxq.utils.network.user.info.me
 
 import android.util.Log
-import com.atcumt.kxq.page.login.dao.StatusEntity
-import com.atcumt.kxq.page.login.dao.UserDao
-import com.atcumt.kxq.page.login.dao.UserEntity
+import com.atcumt.kxq.page.profile.dao.StatusEntity
+import com.atcumt.kxq.page.profile.dao.UserDao
+import com.atcumt.kxq.page.profile.dao.UserEntity
+import com.atcumt.kxq.page.profile.dao.UserRepository
 import com.atcumt.kxq.utils.network.ApiServiceS
 import com.atcumt.kxq.utils.network.ApiServiceS.BASE_URL_USER
 import com.google.gson.Gson
@@ -16,8 +17,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import javax.inject.Inject
 
-class UserInfoService {
+class UserInfoService @Inject constructor(
+    private val repo: UserRepository      // 通过 Hilt 注入
+) {
     // region 数据结构
     data class UserInfoResponse(
         @SerializedName("code") val code: Int,
@@ -54,50 +58,75 @@ class UserInfoService {
 
     // region 本地数据
     private val localResponse = """
-        {
-            "code": 200,
-            "msg": "成功",
-            "data": {
-                "userId": "7bc19f9be50a437f9d9d45193d065b38",
-                "username": "qqqqqq",
-                "nickname": "圈圈FUknaN",
-                "avatar": "http://119.45.93.228:8080/api/file/v1/public/e59b8e263ee1764656e34ef38322f234a67ae9417d66c70652f90311db9271b3.jpg",
-                "bio": "",
-                "gender": 1,
-                "hometown": "",
-                "major": null,
-                "grade": null,
-                "statuses": null,
-                "level": 5,
-                "experience": 0,
-                "followersCount": 2,
-                "followingsCount": 0,
-                "likeReceivedCount": 0
-            }
-        }
-    """
+    {
+      "code": 200,
+      "msg": "成功",
+      "data": {
+        "userId": "e42600ed96884b989c9f9b97d992a9e9",
+        "username": "qqqqqq",
+        "nickname": "圈圈FUknaN",
+        "avatar": "http://119.45.93.228:8080/api/file/v1/public/e59b8e263ee1764656e34ef38322f234a67ae9417d66c70652f90311db9271b3.jpg",
+        "bio": "Android 爱好者，热衷于 Jetpack Compose 与 Kotlin",
+        "gender": 1,
+        "hometown": "北京市 海淀区",
+        "major": "计算机科学与技术",
+        "grade": 2023,
+        "statuses": [
+          {
+            "emoji": "🚀",
+            "text": "正在开发下一代聊天应用",
+            "endTime": "2025-06-30T23:59:59Z"
+          },
+          {
+            "emoji": "🎓",
+            "text": "刚刚获得硕士学位",
+            "endTime": "2024-07-01T00:00:00Z"
+          }
+        ],
+        "level": 5,
+        "experience": 1200,
+        "followersCount": 256,
+        "followingsCount": 128,
+        "likeReceivedCount": 512
+      }
+    }
+    """.trimIndent()
     // endregion
 
     // region 网络请求
-    @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-    suspend fun getUserInfoBlocking(token: String): UserInfoResponse? = withContext(Dispatchers.IO) {
-        suspendCancellableCoroutine { continuation ->
+    @OptIn(ExperimentalCoroutinesApi::class)
+    suspend fun getUserInfoBlocking(): UserInfoResponse? = withContext(Dispatchers.IO) {
+        // 1. 先拿到原始响应（或本地 mock）
+        val parsed: UserInfoResponse? = suspendCancellableCoroutine { cont ->
             ApiServiceS.get(
                 baseUrl = BASE_URL_USER,
                 endpoint = "info/v1/me",
-                headers = mapOf(
-                    "Accept" to "application/json",
-                    "Authorization" to "Bearer $token"
-                )
+                headers = mapOf("Accept" to "application/json")
             ) { response, error ->
-                handleResponse(response, error) { parsedResponse ->
-                    GlobalScope.launch(Dispatchers.IO) {
-                        parsedResponse?.data?.let { saveToLocal(it) }
-                        continuation.resume(parsedResponse, null)
+                // 把 handleResponse 的逻辑内联，直接 resume
+                if (error != null) {
+                    Log.w("UserInfoService", "网络请求失败，使用本地数据")
+                    cont.resume(parseLocalData(), onCancellation = null)
+                } else if (response != null) {
+                    try {
+                        val obj = Gson().fromJson(response, UserInfoResponse::class.java)
+                        cont.resume(obj, onCancellation = null)
+                    } catch (e: Exception) {
+                        Log.e("UserInfoService", "JSON 解析失败，使用本地数据", e)
+                        cont.resume(parseLocalData(), onCancellation = null)
                     }
+                } else {
+                    Log.w("UserInfoService", "收到空响应，使用本地数据")
+                    cont.resume(parseLocalData(), onCancellation = null)
                 }
             }
         }
+
+        // 2. 挂起地写缓存
+        parsed?.data?.let { repo.cacheUser(it) }
+
+        // 3. 返回结果
+        parsed
     }
     // endregion
 
@@ -112,6 +141,7 @@ class UserInfoService {
                 Log.w("UserInfoService", "网络请求失败，使用本地数据")
                 callback(parseLocalData())
             }
+
             response != null -> {
                 try {
                     callback(Gson().fromJson(response, UserInfoResponse::class.java))
@@ -120,6 +150,7 @@ class UserInfoService {
                     callback(parseLocalData())
                 }
             }
+
             else -> {
                 Log.w("UserInfoService", "收到空响应，使用本地数据")
                 callback(parseLocalData())
@@ -129,44 +160,6 @@ class UserInfoService {
 
     private fun parseLocalData(): UserInfoResponse {
         return Gson().fromJson(localResponse, UserInfoResponse::class.java)
-    }
-    // endregion
-
-    // region 数据库操作（保持不变）
-    private suspend fun saveToLocal(data: UserInfoData) = withContext(Dispatchers.IO) {
-        val userEntity = UserEntity(
-            userId = data.userId,
-            username = data.username,
-            nickname = data.nickname,
-            avatar = data.avatar,
-            bio = data.bio,
-            gender = data.gender,
-            hometown = data.hometown,
-            major = data.major,
-            grade = data.grade,
-            level = data.level,
-            experience = data.experience,
-            followersCount = data.followersCount,
-            followingsCount = data.followingsCount,
-            likeReceivedCount = data.likeReceivedCount
-        )
-
-        val statusEntities = data.statuses?.map {
-            it.let { status ->
-                StatusEntity(
-                    userId = data.userId,
-                    emoji = status.emoji,
-                    text = status.text,
-                    endTime = status.endTime
-                )
-            }
-        }
-
-//        userDao.runInTransaction {
-//            userDao.upsertUser(userEntity)
-//            userDao.deleteStatusByUser(data.userId)
-//            statusEntities?.let { userDao.insertStatuses(it) }
-//        }
     }
     // endregion
 }

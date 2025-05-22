@@ -24,10 +24,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.MoreHoriz
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +42,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
 import coil.memory.MemoryCache
@@ -49,6 +54,10 @@ import com.atcumt.kxq.page.component.FlyTabRow
 import com.atcumt.kxq.page.component.FlyText
 import com.atcumt.kxq.page.component.FlyText.AppbarTitle
 import com.atcumt.kxq.page.component.FlyText.SignalText
+import com.atcumt.kxq.page.profile.dao.UserEntity
+import com.atcumt.kxq.page.profile.dao.UserWithStatuses
+import com.atcumt.kxq.page.profile.viewmodel.ProfileUiState
+import com.atcumt.kxq.page.profile.viewmodel.ProfileViewModel
 import com.atcumt.kxq.ui.theme.FlyColors
 import com.atcumt.kxq.ui.theme.KxqTheme
 import com.atcumt.kxq.utils.AdaptiveScreen
@@ -56,9 +65,45 @@ import com.atcumt.kxq.utils.NavViewModel
 import com.atcumt.kxq.utils.ssp
 import com.atcumt.kxq.utils.wdp
 
+@Composable
+fun ProfilePage(viewModel: ProfileViewModel = hiltViewModel()) {
+    val state by viewModel.uiState.collectAsState()
+
+    when (state) {
+        is ProfileUiState.Loading -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        is ProfileUiState.Error -> {
+            val msg = (state as ProfileUiState.Error).message
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    FlyText(text = "错误：$msg")
+                    Spacer(Modifier.height(8.wdp))
+                    Button(onClick = { viewModel.refresh() }) {
+                        FlyText("重试")
+                    }
+                }
+            }
+        }
+        is ProfileUiState.Success -> {
+            ProfileContent((state as ProfileUiState.Success).data)
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ProfilePage() {
+private fun ProfileContent(data: UserWithStatuses?) {
+    if (data == null) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            FlyText("暂无用户数据")
+        }
+        return
+    }
+
+    val user = data.user
     val profileFolders = listOf("消息", "评论", "帖子", "收藏")
     val pagerState = rememberPagerState(initialPage = 1, pageCount = { profileFolders.size })
     val scrollState = rememberLazyListState()
@@ -69,7 +114,7 @@ fun ProfilePage() {
     ) {
         // 头部区域（不固定）
         item {
-            ProfileHeaders()
+            ProfileHeaders(user)
         }
 
         // 固定 FlyTabRow（吸顶效果）
@@ -122,7 +167,7 @@ private fun HorizontalPagerContent(
 }
 
 @Composable
-fun ProfileHeaders() {
+fun ProfileHeaders(user: UserEntity) {
     val navController = NavViewModel.navController.value
     Column(
         modifier = Modifier
@@ -143,7 +188,7 @@ fun ProfileHeaders() {
             Image(
                 painter = rememberAsyncImagePainter(
                     ImageRequest.Builder(LocalContext.current)
-                        .data("https://qlogo2.store.qq.com/qzone/1004275481/1004275481/100")
+                        .data(user.avatar)
                         .apply {
                             crossfade(true)
                             placeholder(R.drawable.ic_launcher_foreground)
@@ -152,7 +197,7 @@ fun ProfileHeaders() {
 //                            size(13) // 单位：像素（根据实际需求调整）
                             // 可选：启用内存缓存
                             memoryCacheKey(
-                                MemoryCache.Key("https://qlogo2.store.qq.com/qzone/1004275481/1004275481/100")
+                                user.avatar?.let { MemoryCache.Key(it) }
                             )
                         }.build()
                 ),
@@ -166,9 +211,9 @@ fun ProfileHeaders() {
                 contentScale = ContentScale.Crop
             )
             Column {
-                AppbarTitle(text = "Kxq", modifier = Modifier.height(22.wdp))
+                AppbarTitle(text = user.nickname ?: user.username, modifier = Modifier.height(22.wdp))
                 Spacer(modifier = Modifier.height(2.wdp))
-                SignalText(text = "@kxq", modifier = Modifier.height(17.wdp))
+                SignalText(text = user.username, modifier = Modifier.height(17.wdp))
             }
             Spacer(modifier = Modifier.weight(1f))
             FlyWeakenButton(
@@ -199,13 +244,13 @@ fun ProfileHeaders() {
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TagCard(title = "粉丝", content = "标签")
+            TagCard(title = "粉丝", content = user.followersCount.toString())
             Box(
                 modifier = Modifier.padding(horizontal = 10.wdp)
             ) {
-                TagCard(title = "关注", content = "标签")
+                TagCard(title = "关注", content = user.followingsCount.toString())
             }
-            TagCard(title = "获赞", content = "标签")
+            TagCard(title = "获赞", content = user.likeReceivedCount.toString())
         }
     }
 }

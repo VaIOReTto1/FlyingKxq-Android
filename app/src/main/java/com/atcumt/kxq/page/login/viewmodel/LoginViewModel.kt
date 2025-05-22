@@ -45,7 +45,8 @@ sealed class LoginIntent {
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val tokenProvider: TokenProvider,
-    private val userDefaults: FlyUserDefaults
+    private val userDefaults: FlyUserDefaults,
+    private val userInfoService: UserInfoService
 ) : ViewModel() {
     // 用于发送UI状态
     private val _state = MutableStateFlow<LoginState>(LoginState.Idle)
@@ -94,7 +95,7 @@ class LoginViewModel @Inject constructor(
                     )
                 }
 
-                if (loginResponse.code == 200&& loginResponse.data != null) {
+                if (loginResponse.code == 200 && loginResponse.data != null) {
                     // 2. 异步获取用户信息
                     launch(Dispatchers.IO) {
                         try {
@@ -113,12 +114,9 @@ class LoginViewModel @Inject constructor(
 
                             // —— 标记已登录 ——
                             userDefaults.set(true, FlyUserDefaultsKey.IS_LOGGED_IN)
+                            userDefaults.set(loginResponse.data.userId, FlyUserDefaultsKey.USER_ID)
 
-                            loginResponse.data.accessToken?.let {
-                                UserInfoService().getUserInfoBlocking(
-                                    it
-                                )
-                            }
+                            userInfoService.getUserInfoBlocking()
                             withContext(Dispatchers.Main) {
                                 // 3. 更新UI状态
                                 _eventChannel.send(Event.NavigateTo("main"))
