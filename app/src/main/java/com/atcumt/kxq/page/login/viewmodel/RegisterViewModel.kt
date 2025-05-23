@@ -7,19 +7,27 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.atcumt.kxq.utils.Store.UserDefaults.FlyUserDefaults
+import com.atcumt.kxq.utils.Store.UserDefaults.FlyUserDefaultsKey
 import com.atcumt.kxq.utils.ValidationUtil
+import com.atcumt.kxq.utils.network.TokenProvider
 import com.atcumt.kxq.utils.network.auth.RegisterService
+import com.atcumt.kxq.utils.network.user.info.me.UserInfoService
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
 // UI状态：表示注册页面的不同状态
 sealed class RegisterState {
-    object Idle : RegisterState() // 空闲状态
-    object Loading : RegisterState() // 加载中状态
+    data object Idle : RegisterState() // 空闲状态
+    data object Loading : RegisterState() // 加载中状态
     data class Success(val message: String) : RegisterState() // 成功状态
     data class Error(val error: String) : RegisterState() // 错误状态
 }
@@ -29,8 +37,12 @@ sealed class RegisterIntent {
     data class Register(val username: String, val password: String) : RegisterIntent() // 注册意图
 }
 
-
-class RegisterViewModel : ViewModel() {
+@HiltViewModel
+class RegisterViewModel @Inject constructor(
+    private val tokenProvider: TokenProvider,
+    private val userDefaults: FlyUserDefaults,
+    private val userInfoService: UserInfoService
+) : ViewModel() {
     // UI 状态管理
     private val _state = MutableStateFlow<RegisterState>(RegisterState.Idle)
     val state: StateFlow<RegisterState> = _state
@@ -43,7 +55,7 @@ class RegisterViewModel : ViewModel() {
     val intentChannel = Channel<RegisterIntent>(Channel.UNLIMITED)
 
     var unifiedAuthToken: String? by mutableStateOf(null)// 统一认证令牌
-    var qqAuthorizationCode: String? by mutableStateOf(null) // QQ 认证码（如果有）
+    private var qqAuthorizationCode: String? by mutableStateOf(null) // QQ 认证码（如果有）
 
     init {
         processIntents()
@@ -90,9 +102,38 @@ class RegisterViewModel : ViewModel() {
 
 
                 // 判断响应状态
-                if (response.code == 200) {
-                    _eventChannel.send(Event.NavigateTo("main"))
-                    _eventChannel.send(Event.ShowToast("注册成功！"))
+                if (response.code == 200 && response.data != null) {
+                    launch(Dispatchers.IO) {
+                        try {
+                            val data = response.data
+
+                            // —— 💾 存储 token ——
+                            tokenProvider.saveToken(
+                                data.accessToken.orEmpty(),
+                                data.refreshToken.orEmpty()
+                            )
+
+                            // —— 计算并保存到期时间戳（毫秒）——
+                            val expiresInSec = data.expiresIn ?: 0L
+                            val expiresAt = System.currentTimeMillis() + expiresInSec * 1000L
+                            userDefaults.set(expiresAt, FlyUserDefaultsKey.TOKEN_EXPIRES_AT)
+
+                            // —— 标记已登录 ——
+                            userDefaults.set(true, FlyUserDefaultsKey.IS_LOGGED_IN)
+                            userDefaults.set(data.userId, FlyUserDefaultsKey.USER_ID)
+
+                            userInfoService.getUserInfoBlocking()
+                            withContext(Dispatchers.Main) {
+                                // 3. 更新UI状态
+                                _eventChannel.send(Event.NavigateTo("main"))
+                                _eventChannel.send(Event.ShowToast("注册成功！"))
+                            }
+                        } catch (e: Exception) {
+                            withContext(Dispatchers.Main) {
+                                _eventChannel.send(Event.ShowToast("用户信息获取失败: ${e.message}"))
+                            }
+                        }
+                    }
                 } else {
                     Log.d("NetworkLog", "Received login request: ${response.msg}")
                     _eventChannel.send(Event.ShowToast(response.msg ?: "注册失败"))

@@ -12,6 +12,10 @@ class UserRepository @Inject constructor(
 ) {
     /** 将网络层 DTO 转为 Entity 并持久化 */
     suspend fun cacheUser(data: UserInfoData) {
+        Log.d("UserRepository", "📤 cacheUser: 清空旧数据")
+        userDao.clearAllStatuses()
+        userDao.clearAll()
+
         val user = data.toEntity()
         val statuses = data.statuses?.map { it.toEntity(data.userId) }
         Log.d("UserRepository", "📥 cacheUser start: user=${user.userId}, statuses=${statuses?.size}")

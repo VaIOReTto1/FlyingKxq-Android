@@ -114,7 +114,7 @@ class LoginViewModel @Inject constructor(
 
                             // —— 标记已登录 ——
                             userDefaults.set(true, FlyUserDefaultsKey.IS_LOGGED_IN)
-                            userDefaults.set(loginResponse.data.userId, FlyUserDefaultsKey.USER_ID)
+                            userDefaults.set(data.userId, FlyUserDefaultsKey.USER_ID)
 
                             userInfoService.getUserInfoBlocking()
                             withContext(Dispatchers.Main) {

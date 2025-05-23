@@ -100,4 +100,7 @@ interface UserDao {
     // 查询所有状态
     @Query("SELECT * FROM status")
     suspend fun getAllStatuses(): List<StatusEntity>
+
+    @Query("DELETE FROM status")
+    suspend fun clearAllStatuses()
 }

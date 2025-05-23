@@ -12,8 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 
 // 统一认证状态
 sealed class UnifiedAuthState {
-    object Idle : UnifiedAuthState() // 空闲状态
-    object Loading : UnifiedAuthState() // 加载中状态
+    data object Idle : UnifiedAuthState() // 空闲状态
+    data object Loading : UnifiedAuthState() // 加载中状态
     data class Success(val message: String) : UnifiedAuthState() // 成功状态
     data class Error(val error: String) : UnifiedAuthState() // 错误状态
 }

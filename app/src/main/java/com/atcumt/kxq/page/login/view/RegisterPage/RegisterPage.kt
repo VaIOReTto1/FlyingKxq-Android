@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.atcumt.kxq.R
@@ -50,7 +51,7 @@ import com.atcumt.kxq.utils.wdp
 @Composable
 fun RegisterPage(
     navController: NavController,
-    viewModel: RegisterViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+    viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
 
