@@ -100,12 +100,13 @@ class UserInfoService @Inject constructor(
         val parsed: UserInfoResponse? = suspendCancellableCoroutine { cont ->
             ApiServiceS.get(
                 baseUrl = BASE_URL_USER,
+                params = mapOf(),
                 endpoint = "info/v1/me",
                 headers = mapOf("Accept" to "application/json")
             ) { response, error ->
                 // 把 handleResponse 的逻辑内联，直接 resume
                 if (error != null) {
-                    Log.w("UserInfoService", "网络请求失败，使用本地数据")
+                    Log.w("UserInfoService", error)
                     cont.resume(parseLocalData(), onCancellation = null)
                 } else if (response != null) {
                     try {
